@@ -6,6 +6,7 @@ use YAML;
 use Text::Template;
 use File::Basename qw/basename/;
 use File::Path 'mkpath';
+use Cwd 'getcwd';
 
 our $YAML = YAML::LoadFile("./observ.yaml");
 
@@ -43,6 +44,8 @@ sub main(){
 	# Templateからphp実行前処理と実行後処理を作成
 	generate_from_template("./template/prepend.php", {TRACELOG_DIR => "$YAML->{TRACELOG_DIR}"});
 	generate_from_template("./template/append.php", {});
+	# Templateからphp.iniを作成
+	generate_from_template("./template/custom-php.ini", {CWD => getcwd()});
 
 	# plackとphp builid in serverの起動
 	system("/usr/bin/plackup observ.psgi >> $YAML->{PLACK_SERVER_LOG} 2>&1 &");

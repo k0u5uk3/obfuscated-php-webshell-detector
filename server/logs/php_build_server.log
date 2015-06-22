@@ -1,0 +1,5 @@
+[Mon Jun 22 21:04:42 2015] 127.0.0.1:53381 [200]: /b374k.php - Unknown: Failed opening required '/root/prepend.php' (include_path='.:/usr/share/php:/usr/share/pear') in Unknown on line 0
+[Mon Jun 22 21:05:42 2015] 127.0.0.1:53383 [200]: /b374k.php - Unknown: Failed opening required '/root/prepend.php' (include_path='.:/usr/share/php:/usr/share/pear') in Unknown on line 0
+[Mon Jun 22 21:07:44 2015] 127.0.0.1:53385 [200]: /b374k.php - Unknown: Failed opening required './prepend.php' (include_path='.:/usr/share/php:/usr/share/pear') in Unknown on line 0
+[Mon Jun 22 21:08:16 2015] 127.0.0.1:53387 [200]: /b374k.php - Unknown: Failed opening required './prepend.php' (include_path='.:/usr/share/php:/usr/share/pear') in Unknown on line 0
+[Mon Jun 22 21:12:41 2015] 127.0.0.1:53388 [200]: /b374k.php
