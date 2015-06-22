@@ -33,8 +33,8 @@ sub main(){
 	generate_from_template("./template/append.php", {});
 
 	# plackとphp builid in serverの起動
-	system("/usr/bin/plackup observ.psgi &");
-	system("/usr/bin/php -t $YAML->{WEBROOT} -S $YAML->{PHP_BUILD_SERVER_HOST}:$YAML->{PHP_BUILD_SERVER_PORT} -c ./custom-php.ini &");
+	system("/usr/bin/plackup observ.psgi >> $YAML->{PLACK_SERVER_LOG} 2>&1 &");
+	system("/usr/bin/php -t $YAML->{WEBROOT} -S $YAML->{PHP_BUILD_SERVER_HOST}:$YAML->{PHP_BUILD_SERVER_PORT} -c ./custom-php.ini >> $YAML->{PHP_BUILD_SERVER_LOG} 2>&1 &");
 }
 
 main ();
