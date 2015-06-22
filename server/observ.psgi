@@ -67,34 +67,32 @@ sub get_tracelog($){
    my $response = $ua->get("http://$YAML->{PHP_BUILD_SERVER_HOST}:$YAML->{PHP_BUILD_SERVER_PORT}/$file_name");
    die "Failed execute http://$YAML->{PHP_BUILD_SERVER_HOST}:$YAML->{PHP_BUILD_SERVER_PORT}/$file_name" unless $response->is_success;
 
-   return ["$YAML->{TRACELOG_DIR}".$file_name.".xt"];
+   return "$YAML->{TRACELOG_DIR}".$file_name.".xt";
 }
 
 sub parse_tracelog($){
-   my $tracelogs = shift;
+   my $tracelog = shift;
    my %hash;
 
-   foreach my $tracelog (@$tracelogs){
-      my ($START_FLAG, $END_FLAG);
-      open my $fh, '<', $tracelog or die "Failed open $tracelog : $!\n";
-      while(<$fh>){
-         if($_ =~ /^TRACE\sSTART/){ $START_FLAG=1};
-         if($_ =~ /^TRACE\sEND/){   $END_FLAG=1  };
+   my ($START_FLAG, $END_FLAG);
+   open my $fh, '<', $tracelog or die "Failed open $tracelog : $!\n";
+   while(<$fh>){
+      if($_ =~ /^TRACE\sSTART/){ $START_FLAG=1};
+      if($_ =~ /^TRACE\sEND/){   $END_FLAG=1  };
 
-         if($START_FLAG && !$END_FLAG){
-            # 解析対象
-            my @col = split(/\s+/,$_);
-            # 関数名を保存
-            if($col[3] eq '->' && defined $col[4]){
-               # 関数名だけを切り出し
-               $col[4] =~ s/(.+?)\(.*/$1/;
-               # 関数名を出現回数を保存
-               $hash{$col[4]}++;
-            }
+      if($START_FLAG && !$END_FLAG){
+         # 解析対象
+         my @col = split(/\s+/,$_);
+         # 関数名を保存
+         if($col[3] eq '->' && defined $col[4]){
+            # 関数名だけを切り出し
+            $col[4] =~ s/(.+?)\(.*/$1/;
+            # 関数名を出現回数を保存
+            $hash{$col[4]}++;
          }
       }
-      close($fh);
    }
+   close($fh);
 
    return \%hash;
 }
