@@ -67,7 +67,7 @@ sub get_tracelog($){
    my $response = $ua->get("http://$YAML->{PHP_BUILD_SERVER_HOST}:$YAML->{PHP_BUILD_SERVER_PORT}/$file_name");
    die "Failed execute http://$YAML->{PHP_BUILD_SERVER_HOST}:$YAML->{PHP_BUILD_SERVER_PORT}/$file_name" unless $response->is_success;
 
-   return ["$YAML->{TRACELOG_DIR}".$file_name];
+   return ["$YAML->{TRACELOG_DIR}".$file_name.".xt"];
 }
 
 sub parse_tracelog($){
