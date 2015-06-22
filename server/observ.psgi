@@ -73,7 +73,7 @@ sub get_tracelog($){
       @tracelogs = grep { m/trace\..+?\.xt/} readdir $dh;
       close($dh);
 
-      map{ unlink "$YAML{TRACELOG_DIR}/$_" or die "Failed unlink $_ : $!\n" } @tracelogs;
+      map{ unlink "$YAML->{TRACELOG_DIR}/$_" or die "Failed unlink $_ : $!\n" } @tracelogs;
       @tracelogs = ();
    }
 
