@@ -82,8 +82,8 @@ sub get_tracelog($){
    my $ua = LWP::UserAgent->new;
    $ua->agent("Obfusucation Detection Browser $VERSION");
    # 解析PHPをApache経由で実行し、Xdebugにtracelogを吐かせる
-   my $response = $ua->get("http://127.0.0.1/$file_name");
-   die "Failed execute 127.0.0.1/$file_name" unless $response->is_success;
+   my $response = $ua->get("http://$YAML->{PHP_BUILD_SERVER_HOST}:$YAML->{PHP_BUILD_SERVER_PORT}/$file_name");
+   die "Failed execute http://$YAML->{PHP_BUILD_SERVER_HOST}:$YAML->{PHP_BUILD_SERVER_PORT}/$file_name" unless $response->is_success;
 
    # 現在残っているTRACELOGのみを取得する 
    {

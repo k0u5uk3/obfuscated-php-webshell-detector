@@ -28,9 +28,13 @@ sub generate_from_template($$){
 # MAIN ROUTIN #
 #-------------#
 sub main(){
+	# Templateからphp実行前処理と実行後処理を作成
 	generate_from_template("./template/prepend.php", {TRACELOG_DIR => "$YAML->{TRACELOG_DIR}"});
 	generate_from_template("./template/append.php", {});
+
+	# plackとphp builid in serverの起動
+	system("/usr/bin/plackup observ.psgi &");
+	system("/usr/bin/php -t $YAML->{WEBROOT} -S $YAML->{PHP_BUILD_SERVER_HOST}:$YAML->{PHP_BUILD_SERVER_PORT} -c ./custom-php.ini &");
 }
 
 main ();
-
