@@ -5,12 +5,20 @@ use Data::Dumper;
 use YAML;
 use Text::Template;
 use File::Basename qw/basename/;
+use File::Path 'mkpath';
 
 our $YAML = YAML::LoadFile("./observ.yaml");
 
 #-----------#
 # SUB ROUTN #
 #-----------#
+sub essential_dir($){
+   my $dir = shift;
+   unless(-d $dir){
+      mkpath($dir) or die "Failed make $dir directory : $!\n";
+   }
+}
+
 sub generate_from_template($$){
 	my $tmpl_file = shift;
 	my $data = shift;
@@ -28,6 +36,10 @@ sub generate_from_template($$){
 # MAIN ROUTIN #
 #-------------#
 sub main(){
+	# 作業上必要なディレクトリを作成する
+	essential_dir($YAML->{WEBROOT});
+	essential_dir($YAML->{TRACELOG_DIR});
+
 	# Templateからphp実行前処理と実行後処理を作成
 	generate_from_template("./template/prepend.php", {TRACELOG_DIR => "$YAML->{TRACELOG_DIR}"});
 	generate_from_template("./template/append.php", {});
