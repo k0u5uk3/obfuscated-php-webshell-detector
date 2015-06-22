@@ -175,7 +175,7 @@ sub main(){
 
       my $ana_path;
       my $server_md5;
-      my $tracelogs;
+      my $tracelog;
 
       # eval内の関数はdieする可能性があるのでtrapする。
       eval{
@@ -184,7 +184,7 @@ sub main(){
          # MD5を取得
          $server_md5 = get_md5($ana_path);
          # tracelogの取得
-         $tracelogs = get_tracelog($file_name);
+         $tracelog = get_tracelog($file_name);
       };
 
       # MD5エラー 
@@ -199,7 +199,10 @@ sub main(){
 
       # tracelogの解析 
       # $func_infoは関数名と出現回数を記録したハッシュリファレンス
-      my $func_info = parse_tracelog($tracelogs);
+      my $func_info = parse_tracelog($tracelog);
+
+      # tracelogが必要な処理が終わったらtracelogを削除する
+      unlink($tracelog) or die "Failed unklink $tracelog : $!\n" if -f $tracelog;
 
       if($mode eq 'dump'){
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ sprintf Dumper ($func_info) ], ];
