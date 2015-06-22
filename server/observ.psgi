@@ -67,17 +67,6 @@ sub get_rand_string($){
 sub get_tracelog($){
    my $file_name = shift;
 
-   # TRACELOGディレクトリのすべてのファイルを削除する。
-   my @tracelogs;
-   {
-      opendir my $dh, $YAML->{TRACELOG_DIR} or die "Failed open $YAML->{TRACELOG_DIR} : $!\n"; 
-      @tracelogs = grep { m/trace\..+?\.xt/} readdir $dh;
-      close($dh);
-
-      map{ unlink "$YAML->{TRACELOG_DIR}/$_" or die "Failed unlink $_ : $!\n" } @tracelogs;
-      @tracelogs = ();
-   }
-
    # ブラウザの作成
    my $ua = LWP::UserAgent->new;
    $ua->agent("Obfusucation Detection Browser $VERSION");
@@ -85,14 +74,7 @@ sub get_tracelog($){
    my $response = $ua->get("http://$YAML->{PHP_BUILD_SERVER_HOST}:$YAML->{PHP_BUILD_SERVER_PORT}/$file_name");
    die "Failed execute http://$YAML->{PHP_BUILD_SERVER_HOST}:$YAML->{PHP_BUILD_SERVER_PORT}/$file_name" unless $response->is_success;
 
-   # 現在残っているTRACELOGのみを取得する 
-   {
-      opendir my $dh, $YAML->{TRACELOG_DIR} or die "Failed open $YAML->{TRACELOG_DIR} : $!\n"; 
-      @tracelogs = grep { m/trace\..+?\.xt/} readdir $dh;
-      close($dh);
-   }
-   
-   return [map{ "$YAML->{TRACELOG_DIR}".$_ } @tracelogs];
+   return ["$YAML->{TRACELOG_DIR}".$file_name];
 }
 
 sub parse_tracelog($){
