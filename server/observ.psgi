@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+use YAML;
 use Plack::Request;
 use File::Copy;
 use Digest::MD5;
@@ -8,18 +9,23 @@ use HTTP::Request::Common;
 use LWP::UserAgent;
 use Data::Dumper;
 
-our $VERSION = "0.0.1";
-our $ANALYZE_DIR = "/var/www/obana/";
-our $ANALYZE_URI = "http://133.130.52.245/";
-our $TRACELOG_DIR = "/var/log/obana/tracelog/";
+our $VERSION = "0.0.2";
+our $YAML = YAML::LoadFile("./observ.yaml");
 
 #------------#
 # SUB ROUTIN # 
 #------------#
+sub essential_dir($){
+   my $dir = shift;
+   unless(-d $dir){
+      mkdir($dir) or die "Failed make directory : $!\n";
+   }
+}
+
 sub decide_file_location($$){
    my $file_path = shift;
    my $file_name = shift;
-   my $ana_path = $ANALYZE_DIR . $file_name;
+   my $ana_path = $YAML{WEBROOT} . $file_name;
 
    # $file_pathが存在することを確認
    if(! -f $file_path){
@@ -63,11 +69,11 @@ sub get_tracelog($){
    # TRACELOGディレクトリのすべてのファイルを削除する。
    my @tracelogs;
    {
-      opendir my $dh, $TRACELOG_DIR or die "Failed open $TRACELOG_DIR : $!\n"; 
+      opendir my $dh, $YAML{TRACELOG_DIR} or die "Failed open $YAML{TRACELOG_DIR} : $!\n"; 
       @tracelogs = grep { m/trace\..+?\.xt/} readdir $dh;
       close($dh);
 
-      map{ unlink "$TRACELOG_DIR/$_" or die "Failed unlink $_ : $!\n" } @tracelogs;
+      map{ unlink "$YAML{TRACELOG_DIR}/$_" or die "Failed unlink $_ : $!\n" } @tracelogs;
       @tracelogs = ();
    }
 
@@ -75,17 +81,17 @@ sub get_tracelog($){
    my $ua = LWP::UserAgent->new;
    $ua->agent("Obfusucation Detection Browser $VERSION");
    # 解析PHPをApache経由で実行し、Xdebugにtracelogを吐かせる
-   my $response = $ua->get("$ANALYZE_URI/$file_name");
-   die "Failed execute $ANALYZE_URI/$file_name" unless $response->is_success;
+   my $response = $ua->get("127.0.0.1/$file_name");
+   die "Failed execute 127.0.0.1/$file_name" unless $response->is_success;
 
    # 現在残っているTRACELOGのみを取得する 
    {
-      opendir my $dh, $TRACELOG_DIR or die "Failed open $TRACELOG_DIR : $!\n"; 
+      opendir my $dh, $YAML{TRACELOG_DIR} or die "Failed open $YAML{TRACELOG_DIR} : $!\n"; 
       @tracelogs = grep { m/trace\..+?\.xt/} readdir $dh;
       close($dh);
    }
    
-   return [map{ "$TRACELOG_DIR".$_ } @tracelogs];
+   return [map{ "$YAML{TRACELOG_DIR}".$_ } @tracelogs];
 }
 
 sub parse_tracelog($){
@@ -183,48 +189,58 @@ sub analyze($){
 #-------------#
 # MAIN ROUTIN #
 #-------------#
-my $app = sub {
-   # obscan.plからのパラメータ取得
-   my $req = Plack::Request->new(shift);
-   my $uploads = $req->uploads;
-   my $file_name = $uploads->{data}->{filename};    # 対象ファイル名
-   my $file_path = $uploads->{data}->{tempname};    # 対象ファイルの一時保存先
-   my $client_md5 = $req->parameters->{md5};        # 対象ファイルのCLIENT側で取得したmd5
-   my $mode = $req->parameters->{mode};
-   
-   my $ana_path;
-   my $server_md5;
-   my $tracelogs;
+sub main(){
 
-   # eval内の関数はdieする可能性があるのでtrapする。
-   eval{
-      # 解析対象ファイルを解析場所に配置してファイルパスを取得
-      $ana_path = decide_file_location($file_path, $file_name);
-      # MD5を取得
-      $server_md5 = get_md5($ana_path);
-      # tracelogの取得
-      $tracelogs = get_tracelog($file_name);
+   # 作業上必要なディレクトリを作成する
+   essential_dir($YAML{WEBROOT});
+   essential_dir($YAML{TRACELOG_DIR});
+
+   my $app = sub {
+      # obscan.plからのパラメータ取得
+      my $req = Plack::Request->new(shift);
+      my $uploads = $req->uploads;
+      my $file_name = $uploads->{data}->{filename};    # 対象ファイル名
+      my $file_path = $uploads->{data}->{tempname};    # 対象ファイルの一時保存先
+      my $client_md5 = $req->parameters->{md5};        # 対象ファイルのCLIENT側で取得したmd5
+      my $mode = $req->parameters->{mode};
+
+      my $ana_path;
+      my $server_md5;
+      my $tracelogs;
+
+      # eval内の関数はdieする可能性があるのでtrapする。
+      eval{
+         # 解析対象ファイルを解析場所に配置してファイルパスを取得
+         $ana_path = decide_file_location($file_path, $file_name);
+         # MD5を取得
+         $server_md5 = get_md5($ana_path);
+         # tracelogの取得
+         $tracelogs = get_tracelog($file_name);
+      };
+
+      # MD5エラー 
+      if($client_md5 ne $server_md5){
+         return [ 500, [ 'Content-Type' => 'text/plain' ], [ "upload file is corrupted." ], ];
+      }
+
+      # 例外のハンドリング 
+      if($@){
+         return [ 500, [ 'Content-Type' => 'text/plain' ], [ $@ ], ];
+      }
+
+      # tracelogの解析 
+      # $func_infoは関数名と出現回数を記録したハッシュリファレンス
+      my $func_info = parse_tracelog($tracelogs);
+
+      if($mode eq 'dump'){
+         return [ 200, [ 'Content-Type' => 'text/plain' ], [ sprintf Dumper ($func_info) ], ];
+      }
+
+      return analyze($func_info); 
    };
 
-   # MD5エラー 
-   if($client_md5 ne $server_md5){
-      return [ 500, [ 'Content-Type' => 'text/plain' ], [ "upload file is corrupted." ], ];
-   }
+   return $app;
+}
 
-   # 例外のハンドリング 
-   if($@){
-      return [ 500, [ 'Content-Type' => 'text/plain' ], [ $@ ], ];
-   }
+main();
 
-   # tracelogの解析 
-   # $func_infoは関数名と出現回数を記録したハッシュリファレンス
-   my $func_info = parse_tracelog($tracelogs);
-
-   if($mode eq 'dump'){
-      return [ 200, [ 'Content-Type' => 'text/plain' ], [ sprintf Dumper ($func_info) ], ];
-   }
-
-   return analyze($func_info); 
-};
-
-return $app;

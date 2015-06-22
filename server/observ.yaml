@@ -1,0 +1,2 @@
+WEBROOT: /tmp/obfusucated-php-detector/webroot/
+TRACELOG_DIR: /tmp/obfusucated-php-detector/tracelog/

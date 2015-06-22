@@ -11,7 +11,7 @@ use Data::Dumper;
 our $DEBUG=0;
 
 sub usage{
-   printf("Usage : %s -f [filename] [-m detect|dump]\n", $0); 
+   printf("Usage : %s -f [filename] [-m detect|deobfusucate|trace]\n", $0); 
    exit(0);
 }
 
@@ -60,7 +60,7 @@ sub get_md5($){
 
 my $target_file = $opts{filename};
 my $target_md5  = get_md5($target_file);
-my $analyze_url = "http://133.130.52.245:5000";
+my $analyze_url = "http://192.168.74.57:5000";
 
 my $req = POST(
    $analyze_url,
