@@ -25,7 +25,7 @@ sub essential_dir($){
 sub decide_file_location($$){
    my $file_path = shift;
    my $file_name = shift;
-   my $ana_path = $YAML{WEBROOT} . $file_name;
+   my $ana_path = $YAML->{WEBROOT} . $file_name;
 
    # $file_pathが存在することを確認
    if(! -f $file_path){
@@ -69,7 +69,7 @@ sub get_tracelog($){
    # TRACELOGディレクトリのすべてのファイルを削除する。
    my @tracelogs;
    {
-      opendir my $dh, $YAML{TRACELOG_DIR} or die "Failed open $YAML{TRACELOG_DIR} : $!\n"; 
+      opendir my $dh, $YAML->{TRACELOG_DIR} or die "Failed open $YAML->{TRACELOG_DIR} : $!\n"; 
       @tracelogs = grep { m/trace\..+?\.xt/} readdir $dh;
       close($dh);
 
@@ -86,12 +86,12 @@ sub get_tracelog($){
 
    # 現在残っているTRACELOGのみを取得する 
    {
-      opendir my $dh, $YAML{TRACELOG_DIR} or die "Failed open $YAML{TRACELOG_DIR} : $!\n"; 
+      opendir my $dh, $YAML->{TRACELOG_DIR} or die "Failed open $YAML->{TRACELOG_DIR} : $!\n"; 
       @tracelogs = grep { m/trace\..+?\.xt/} readdir $dh;
       close($dh);
    }
    
-   return [map{ "$YAML{TRACELOG_DIR}".$_ } @tracelogs];
+   return [map{ "$YAML->{TRACELOG_DIR}".$_ } @tracelogs];
 }
 
 sub parse_tracelog($){
@@ -192,8 +192,8 @@ sub analyze($){
 sub main(){
 
    # 作業上必要なディレクトリを作成する
-   essential_dir($YAML{WEBROOT});
-   essential_dir($YAML{TRACELOG_DIR});
+   essential_dir($YAML->{WEBROOT});
+   essential_dir($YAML->{TRACELOG_DIR});
 
    my $app = sub {
       # obscan.plからのパラメータ取得
