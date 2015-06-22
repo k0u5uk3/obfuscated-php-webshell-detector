@@ -18,7 +18,7 @@ our $YAML = YAML::LoadFile("./observ.yaml");
 sub essential_dir($){
    my $dir = shift;
    unless(-d $dir){
-      mkdir($dir) or die "Failed make directory : $!\n";
+      mkdir($dir) or die "Failed make $dir directory : $!\n";
    }
 }
 
