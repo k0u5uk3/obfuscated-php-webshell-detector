@@ -202,7 +202,9 @@ sub main(){
       my $func_info = parse_tracelog($tracelog);
 
       # tracelogが必要な処理が終わったらtracelogを削除する
-      unlink($tracelog) or die "Failed unklink $tracelog : $!\n" if -f $tracelog;
+      unlink($tracelog) or die "Failed unlink $tracelog : $!\n" if -f $tracelog;
+      # 解析対象ファイルも削除する
+      unlink($ana_path) or die "Failed unlink $ana_path : $!\n" if -f $ana_path;
 
       if($mode eq 'dump'){
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ sprintf Dumper ($func_info) ], ];
