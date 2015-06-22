@@ -16,13 +16,6 @@ our $YAML = YAML::LoadFile("./observ.yaml");
 #------------#
 # SUB ROUTIN # 
 #------------#
-sub essential_dir($){
-   my $dir = shift;
-   unless(-d $dir){
-      mkpath($dir) or die "Failed make $dir directory : $!\n";
-   }
-}
-
 sub decide_file_location($$){
    my $file_path = shift;
    my $file_name = shift;
@@ -173,11 +166,6 @@ sub analyze($){
 # MAIN ROUTIN #
 #-------------#
 sub main(){
-
-   # 作業上必要なディレクトリを作成する
-   essential_dir($YAML->{WEBROOT});
-   essential_dir($YAML->{TRACELOG_DIR});
-
    my $app = sub {
       # obscan.plからのパラメータ取得
       my $req = Plack::Request->new(shift);
