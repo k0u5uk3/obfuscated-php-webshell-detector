@@ -275,7 +275,7 @@ sub main(){
          # 先頭と行末のシングルクォーテションを削除
          $deobfusucate =~ s/^\'//;
          $deobfusucate =~ s/\'$//;
-         return [ 200, [ 'Content-Type' => 'text/plain' ], [ $deobfusucate) ], ];
+         return [ 200, [ 'Content-Type' => 'text/plain' ], [ $deobfusucate ], ];
       }
    };
 
