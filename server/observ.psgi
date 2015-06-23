@@ -78,7 +78,7 @@ sub get_tracelog($){
 sub parse_tracelog($){
    my $tracelog = shift;
    my %func_count;
-   my @call_stack;
+   my @stack_trace;
    my ($START_FLAG, $END_FLAG);
 
    open my $fh, '<', $tracelog or die "Failed open $tracelog : $!\n";
@@ -92,13 +92,13 @@ sub parse_tracelog($){
             my $func_name = $col[5];
             my @param = @col[11..$#col];
             $func_count{$func_name}++;
-            push(@call_stack, [$func_name, @param]);
+            push(@stack_trace, [$func_name, @param]);
          }
       }
    }
    close($fh);
 
-   return (\%func_count, \@call_stack);;
+   return (\%func_count, \@stack_trace);
 }
 
 sub detect($){
@@ -229,7 +229,7 @@ sub main(){
 
       # tracelogの解析 
       # $func_infoは関数名と出現回数を記録したハッシュリファレンス
-      my ($func_info,$call_stack) = parse_tracelog($tracelog);
+      my ($func_info,$stack_trace) = parse_tracelog($tracelog);
       # tracelogの生テキスト
       my $trace_text = read_file($tracelog);
 
