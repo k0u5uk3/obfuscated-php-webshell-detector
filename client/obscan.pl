@@ -11,7 +11,7 @@ use Data::Dumper;
 our $DEBUG=0;
 
 sub usage{
-   printf("Usage : %s -f [filename] [-m detect|deobfusucate|trace]\n", $0); 
+   printf("Usage : %s -f [filename] [-m detect|deobfusucate|trace|debug]\n", $0); 
    exit(0);
 }
 

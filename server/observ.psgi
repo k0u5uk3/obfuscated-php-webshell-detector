@@ -160,6 +160,16 @@ sub analyze($){
    }
 }
 
+sub read_file($){
+   my $file = shift;
+   my $text;
+   open my $fh, '<', $file or die "Failed read $file : $!\n";
+   local $/ = undef;
+   $text = <$fh>;
+   close($fh);
+   return $text;
+}
+
 #-------------#
 # MAIN ROUTIN #
 #-------------#
@@ -200,17 +210,25 @@ sub main(){
       # tracelogの解析 
       # $func_infoは関数名と出現回数を記録したハッシュリファレンス
       my $func_info = parse_tracelog($tracelog);
+      # tracelogの生テキスト
+      my $trace_text = read_file($tracelog);
 
       # tracelogが必要な処理が終わったらtracelogを削除する
       unlink($tracelog) or die "Failed unlink $tracelog : $!\n" if -f $tracelog;
       # 解析対象ファイルも削除する
       unlink($ana_path) or die "Failed unlink $ana_path : $!\n" if -f $ana_path;
 
-      if($mode eq 'dump'){
+      if($mode eq 'debug'){
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ sprintf Dumper ($func_info) ], ];
       }
+   
+      if($mode eq 'trace'){
+         return [ 200, [ 'Content-Type' => 'text/plain' ], [ $trace_text ], ];
+      }     
 
-      return analyze($func_info); 
+      if($mode eq 'detect'){
+         return analyze($func_info); 
+      }
    };
 
    return $app;
