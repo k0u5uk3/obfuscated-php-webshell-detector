@@ -90,15 +90,16 @@ sub parse_tracelog($){
          if(defined $col[2] && $col[2] eq '0'){
             #関数呼び出しのみを解析対象とする。
             my $func_name = $col[5];
-
+            # 関数呼び出し回数集計
+            $func_count{$func_name}++;
+            # stack_trace作成
             my @param;
             if($func_name eq 'eval'){
                #evalの場合は7番にパラメータが入る
                push(@param,$col[7]);               
+            }else{
+               @param = @col[11..$#col];
             }
-
-            @param = @col[11..$#col];
-            $func_count{$func_name}++;
             push(@stack_trace, [$func_name, @param]);
          }
       }
