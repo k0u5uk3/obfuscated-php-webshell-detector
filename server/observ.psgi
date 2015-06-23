@@ -70,34 +70,38 @@ sub get_tracelog($){
    return "$YAML->{TRACELOG_DIR}".$file_name.".xt";
 }
 
+#---------------------------------------------------------------------
+# parse_tracelogはハッシュリファレンスとリストリファレンスを返す。
+# ハッシュリファレンスは関数名と呼び出し回数を保持しており
+# リストリファレンスは関数を呼び出し順に関数名とパラメータを保持する
+#---------------------------------------------------------------------
 sub parse_tracelog($){
    my $tracelog = shift;
-   my %hash;
-
+   my %func_count;
+   my @call_stack;
    my ($START_FLAG, $END_FLAG);
+
    open my $fh, '<', $tracelog or die "Failed open $tracelog : $!\n";
    while(<$fh>){
       if($_ =~ /^TRACE\sSTART/){ $START_FLAG=1};
       if($_ =~ /^TRACE\sEND/){   $END_FLAG=1  };
-
       if($START_FLAG && !$END_FLAG){
-         # 解析対象
-         my @col = split(/\s+/,$_);
-         # 関数名を保存
-         if($col[3] eq '->' && defined $col[4]){
-            # 関数名だけを切り出し
-            $col[4] =~ s/(.+?)\(.*/$1/;
-            # 関数名を出現回数を保存
-            $hash{$col[4]}++;
+         my @col = split("\t", $_);
+         if(defined $col[2] && $col[2] eq '0'){
+            #関数呼び出しのみを解析対象とする。
+            my $func_name = $col[5];
+            my @param = @col[11..$#col];
+            $func_count{$func_name}++;
+            push(@call_stack, [$func_name, @param]);
          }
       }
    }
    close($fh);
 
-   return \%hash;
+   return (\%func_count, \@call_stack);;
 }
 
-sub analyze($){
+sub detect($){
    my $info = shift;
    my $score = 0;
    my $threshold = 50;
@@ -216,7 +220,7 @@ sub main(){
 
       # tracelogの解析 
       # $func_infoは関数名と出現回数を記録したハッシュリファレンス
-      my $func_info = parse_tracelog($tracelog);
+      my ($func_info,$call_stack) = parse_tracelog($tracelog);
       # tracelogの生テキスト
       my $trace_text = read_file($tracelog);
 
@@ -234,7 +238,7 @@ sub main(){
       }     
 
       if($mode eq 'detect'){
-         return analyze($func_info); 
+         return detect($func_info); 
       }
    };
 
