@@ -94,7 +94,7 @@ sub parse_tracelog($){
             my @param;
             if($func_name eq 'eval'){
                #evalの場合は7番にパラメータが入る
-               @param = $col[7];               
+               push(@param,$col[7]);               
             }
 
             @param = @col[11..$#col];
