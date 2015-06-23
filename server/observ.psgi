@@ -174,6 +174,15 @@ sub read_file($){
    return $text;
 }
 
+sub deobfusucate($){
+   my $stack_trace = shift;
+   return [
+      200,
+      [ 'Content-Type' => 'text/plain' ],
+      [ sprintf Dumper($stack_trace) ],
+   ];
+}
+
 #-------------#
 # MAIN ROUTIN #
 #-------------#
@@ -238,7 +247,12 @@ sub main(){
       }     
 
       if($mode eq 'detect'){
+         # detectは関数内でHTTPヘッダを考慮した返り値を返す
          return detect($func_info); 
+      }
+
+      if($mode eq 'deobfusucate'){
+         return deobfusucate($stack_trace);
       }
    };
 
