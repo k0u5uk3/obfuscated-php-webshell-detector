@@ -195,10 +195,17 @@ sub deobfusucate($){
    # stack traceを逆順に見て行き、上記の関数で呼ばれるパラメータが
    # 難読化済みのコードだと仮定する
 
+   my $ret;
+   foreach my $tmp (reverse @$stack_trace){
+      if($tmp->[0]) eq 'eval'){
+         $ret = sprintf("%s", $tmp->[1]);        
+      }
+   }
+
    return [
       200,
       [ 'Content-Type' => 'text/plain' ],
-      [ sprintf Dumper($stack_trace) ],
+      [ $ret ],
    ];
 }
 
