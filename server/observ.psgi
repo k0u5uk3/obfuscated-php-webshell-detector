@@ -197,7 +197,7 @@ sub deobfusucate($){
          return sprintf("%s", $tmp->[2]);        
       }
        if($tmp->[0] eq 'assert'){
-         return = sprintf("%s", $tmp->[1]);        
+         return sprintf("%s", $tmp->[1]);        
       }
    }
 }
