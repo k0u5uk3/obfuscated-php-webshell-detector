@@ -194,10 +194,6 @@ sub deobfusucate($){
    # stack traceを逆順に見て行き、上記の関数で呼ばれるパラメータが
    # 難読化済みのコードだと仮定する
 
-   foreach my $tmp (reverse @$stack_trace){
-      if(grep {$tmp[0] eq $_}, @eval_func) 
-   }
-
    return [
       200,
       [ 'Content-Type' => 'text/plain' ],
