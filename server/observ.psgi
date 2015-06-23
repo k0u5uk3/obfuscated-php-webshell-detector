@@ -271,7 +271,11 @@ sub main(){
       }
 
       if($mode eq 'deobfusucate'){
-         return [ 200, [ 'Content-Type' => 'text/plain' ], [ deobfusucate($stack_trace) ], ];
+         my $deobfusucate = deobfusucate($stack_trace);
+         # 先頭と行末のシングルクォーテションを削除
+         $deobfusucate =~ s/^\'//;
+         $deobfusucate =~ s/\'$//;
+         return [ 200, [ 'Content-Type' => 'text/plain' ], [ $deobfusucate) ], ];
       }
    };
 
