@@ -90,7 +90,14 @@ sub parse_tracelog($){
          if(defined $col[2] && $col[2] eq '0'){
             #関数呼び出しのみを解析対象とする。
             my $func_name = $col[5];
-            my @param = @col[11..$#col];
+
+            my @param;
+            if($func_name eq 'eval'){
+               #evalの場合は7番にパラメータが入る
+               @param = $col[7];               
+            }
+
+            @param = @col[11..$#col];
             $func_count{$func_name}++;
             push(@stack_trace, [$func_name, @param]);
          }
@@ -176,6 +183,21 @@ sub read_file($){
 
 sub deobfusucate($){
    my $stack_trace = shift;
+
+   my @eval_func = qw(
+      eval
+      assert
+      preg_replace
+      create_function
+   );
+
+   # stack traceを逆順に見て行き、上記の関数で呼ばれるパラメータが
+   # 難読化済みのコードだと仮定する
+
+   foreach my $tmp (reverse @$stack_trace){
+      if(grep {$tmp[0] eq $_}, @eval_func) 
+   }
+
    return [
       200,
       [ 'Content-Type' => 'text/plain' ],
