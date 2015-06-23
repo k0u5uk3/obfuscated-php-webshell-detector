@@ -77,7 +77,7 @@ my $abs_filename = File::Spec->rel2abs("$opts{filename}");
 my $ua = LWP::UserAgent->new;
 my $res = $ua->request( $req );
 if($res->is_success){
-   print "$abs_filename:";
+   print "$abs_filename:" if $opts{mode} eq 'detect';
    print $res->content;
    print "\n";
 }else{
@@ -85,5 +85,3 @@ if($res->is_success){
    print $res->content;
    print "\n";
 }
-
-
