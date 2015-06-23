@@ -197,7 +197,7 @@ sub deobfusucate($){
 
    my $ret;
    foreach my $tmp (reverse @$stack_trace){
-      if($tmp->[0]) eq 'eval'){
+      if($tmp->[0] eq 'eval'){
          $ret = sprintf("%s", $tmp->[1]);        
       }
    }
