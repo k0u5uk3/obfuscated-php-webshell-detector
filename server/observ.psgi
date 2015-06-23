@@ -183,6 +183,13 @@ sub main(){
       my $client_md5 = $req->parameters->{md5};        # 対象ファイルのCLIENT側で取得したmd5
       my $mode = $req->parameters->{mode};
 
+      # mode値のチェック
+      my @allow_mode = qw(detect deobfusucate trace debug);
+
+      unless(grep {$mode eq $_} @allow_mode){
+         return [ 500, [ 'Content-Type' => 'text/plain' ], [ "unexcepted mode paramaeter" ], ];
+      }
+
       my $ana_path;
       my $server_md5;
       my $tracelog;
