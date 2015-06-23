@@ -185,28 +185,21 @@ sub read_file($){
 sub deobfusucate($){
    my $stack_trace = shift;
 
-   my @eval_func = qw(
-      eval
-      assert
-      preg_replace
-      create_function
-   );
-
    # stack traceを逆順に見て行き、上記の関数で呼ばれるパラメータが
    # 難読化済みのコードだと仮定する
 
    my $ret;
    foreach my $tmp (reverse @$stack_trace){
       if($tmp->[0] eq 'eval'){
-         $ret = sprintf("%s", $tmp->[1]);        
+         return sprintf("%s", $tmp->[1]);        
+      }
+      if($tmp->[0] eq 'create_function'){
+         return sprintf("%s", $tmp->[2]);        
+      }
+       if($tmp->[0] eq 'assert'){
+         return = sprintf("%s", $tmp->[1]);        
       }
    }
-
-   return [
-      200,
-      [ 'Content-Type' => 'text/plain' ],
-      [ $ret ],
-   ];
 }
 
 #-------------#
@@ -278,7 +271,7 @@ sub main(){
       }
 
       if($mode eq 'deobfusucate'){
-         return deobfusucate($stack_trace);
+         return [ 200, [ 'Content-Type' => 'text/plain' ], [ deobfusucate($stack_trace) ], ];
       }
    };
 
