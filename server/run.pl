@@ -48,7 +48,7 @@ sub main(){
 	generate_from_template("./template/custom-php.ini", {CWD => getcwd()});
 
 	# plackとphp builid in serverの起動
-	system("/usr/bin/plackup observ.psgi --host $YAML->{PHP_BUILD_SERVER_HOST} --port $YAML->{PLACK_SERVER_PORT} >> $YAML->{PLACK_SERVER_LOG} 2>&1 &");
+	system("/usr/bin/plackup observ.psgi --host $YAML->{PLACK_SERVER_HOST} --port $YAML->{PLACK_SERVER_PORT} >> $YAML->{PLACK_SERVER_LOG} 2>&1 &");
 	system("/usr/bin/php -t $YAML->{WEBROOT} -S $YAML->{PHP_BUILD_SERVER_HOST}:$YAML->{PHP_BUILD_SERVER_PORT} -c ./custom-php.ini >> $YAML->{PHP_BUILD_SERVER_LOG} 2>&1 &");
 }
 
