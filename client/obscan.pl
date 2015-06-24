@@ -7,6 +7,7 @@ use LWP::UserAgent;
 use Getopt::Long qw(:config posix_default no_ignore_case gnu_compat);
 use File::Spec;
 use Data::Dumper;
+use JSON qw(encode_json decode_json);
 
 our $VERBOSE=0;
 
@@ -77,11 +78,36 @@ my $abs_filename = File::Spec->rel2abs("$opts{filename}");
 my $ua = LWP::UserAgent->new;
 my $res = $ua->request( $req );
 if($res->is_success){
-   print "$abs_filename : " if $opts{mode} eq 'detect';
-   print $res->content;
-   print "\n";
+   my $result = decode_json($res->content);
+   # debug mode output 
+   if($result->{mode} eq 'debug'){
+      print "TARGET FILE [ $abs_filename ]\n";
+      foreach my $key (sort {$b cmp $a} keys %{$result->{body}}){
+         print "$key".'['.$result->{body}->{$key}.']'."\n";
+      }
+   }
+   # trace mode output
+   if($result->{mode} eq 'trace'){
+      print "TARGET FILE [ $abs_filename ]\n";
+      print $result->{body};
+   }
+   # detect mode output 
+   if($result->{mode} eq 'detect'){
+      print "TARGET FILE [ $abs_filename ] : $result->{body}\n";
+   }
+   # deobfusucate mode output
+   if($result->{mode} eq 'deobfusucate'){
+      my @deobfusucate = @{$result->{body}};
+      my $i=0;
+      foreach my $deob (@deobfusucate){
+         next unless defined $deob;
+         print "/*** Obfusucated-PHP-Detector STEP $i ***/\n";
+         print $deob . "\n";
+         $i++;
+      }
+   }
 }else{
    print "$abs_filename:";
-   print $res->content;
+   print Dumper($res->content);
    print "\n";
 }
