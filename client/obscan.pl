@@ -61,7 +61,7 @@ sub get_md5($){
 
 my $target_file = $opts{filename};
 my $target_md5  = get_md5($target_file);
-my $analyze_url = "http://192.168.74.57:9999";
+my $analyze_url = "https://192.168.74.57:9999";
 
 my $req = POST(
    $analyze_url,
@@ -76,6 +76,7 @@ my $req = POST(
 my $abs_filename = File::Spec->rel2abs("$opts{filename}");
 
 my $ua = LWP::UserAgent->new;
+$ua->ssl_opts( verify_hostname => 0 );
 my $res = $ua->request( $req );
 if($res->is_success){
    my $result = decode_json($res->content);
