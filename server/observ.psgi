@@ -202,6 +202,12 @@ sub deobfusucate($){
    # 先頭と行末のシングルクォーテションを削除
    $ret =~ s/^\'//;
    $ret =~ s/\'$//;
+
+   # エスケープシーケンスを制御文字に変換
+   $ret =~ s/\\n/\x{0a}/g;
+   $ret =~ s/\\t/\x{09}/g; 
+
+   $ret =~ s/\\//g;
    return sprintf("%s", $ret);        
 }
 
@@ -282,8 +288,7 @@ sub main(){
       }
 
       if($mode eq 'deobfusucate'){
-         my $deobfusucate = deobfusucate($stack_trace);
-         return [ 200, [ 'Content-Type' => 'text/plain' ], [ $deobfusucate ], ];
+         return [ 200, [ 'Content-Type' => 'text/plain' ], [ deobfusucate($stack_trace) ], ];
       }
    };
 
