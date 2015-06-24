@@ -184,11 +184,11 @@ sub read_file($){
 sub deobfusucate($){
    my $stack_trace = shift;
 
-   # stack traceを逆順に見て行き、上記の関数で呼ばれるパラメータが
+   # stack traceを見て行き、上記の関数で呼ばれるパラメータが
    # 難読化済みのコードだと仮定する
 
    my $ret;
-   foreach my $tmp (reverse @$stack_trace){
+   foreach my $tmp (@$stack_trace){
       if($tmp->[0] eq 'eval'){
          $ret = $tmp->[1];
       }
