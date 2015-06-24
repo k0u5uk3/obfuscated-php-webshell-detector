@@ -276,7 +276,7 @@ sub main(){
       cleanup($ana_path, $tracelog);
 
       if($mode eq 'debug'){
-         return [ 200, [ 'Content-Type' => 'text/plain' ], [ sprintf Dumper ($func_info) ], ];
+         return [ 200, [ 'Content-Type' => 'text/plain' ], [ {debug => sprintf Dumper ($func_info) } ], ];
       }
    
       if($mode eq 'trace'){
