@@ -9,9 +9,11 @@ use HTTP::Request::Common;
 use LWP::UserAgent;
 use File::Path 'mkpath';
 use Data::Dumper;
+use JSON qw(encode_json decode_json);
 
 our $VERSION = "0.0.2";
 our $YAML = YAML::LoadFile("./observ.yaml");
+our $THRESHOLD = 50;
 
 #------------#
 # SUB ROUTIN # 
@@ -112,7 +114,6 @@ sub parse_tracelog($){
 sub detect($){
    my $info = shift;
    my $score = 0;
-   my $threshold = 50;
    my @msg;
    
    # コード再評価のための関数
@@ -154,21 +155,8 @@ sub detect($){
       }
    } keys %$info;
 
-   if($score >= $threshold){
-      # malware判定
-      return [
-         200,
-         [ 'Content-Type' => 'text/plain' ],
-         [ "Detect($score):" . join(",", @msg) ],
-      ];
-   }else{
-      # malwareではない 
-      return [
-         200,
-         [ 'Content-Type' => 'text/plain' ],
-         [ "None($score):" . join(",", @msg) ],
-      ];
-   }
+   return ($score, \@msg);
+
 }
 
 sub read_file($){
@@ -181,35 +169,39 @@ sub read_file($){
    return $text;
 }
 
-sub deobfusucate($){
-   my $stack_trace = shift;
-
-   # stack traceを見て行き、上記の関数で呼ばれるパラメータが
-   # 難読化済みのコードだと仮定する
-
-   my $ret;
-   foreach my $tmp (@$stack_trace){
-      if($tmp->[0] eq 'eval'){
-         $ret = $tmp->[1];
-      }
-      if($tmp->[0] eq 'create_function'){
-         $ret = $tmp->[2];
-      }
-       if($tmp->[0] eq 'assert'){
-         $ret = $tmp->[1];
-      }
-   }
+sub escape2control($){
+   my $string = shift;
    # 先頭と行末のシングルクォーテションを削除
-   $ret =~ s/^\'//;
-   $ret =~ s/\'$//;
+   $string =~ s/^\'//;
+   $string =~ s/\'$//;
 
    # エスケープシーケンスを制御文字に変換
-   $ret =~ s/\\r\\n/\x{0a}/g;
-   $ret =~ s/\\n/\x{0a}/g;
-   $ret =~ s/\\t/\x{09}/g; 
+   $string =~ s/\\r\\n/\x{0a}/g;
+   $string =~ s/\\n/\x{0a}/g;
+   $string =~ s/\\t/\x{09}/g; 
 
-   $ret =~ s/\\//g;
-   return sprintf("%s", $ret);        
+   $string =~ s/\\//g;
+   return $string;
+}
+
+sub deobfusucate($){
+   my $stack_trace = shift;
+   my @ret;
+
+   foreach my $tmp (@$stack_trace){
+      my $deobfusucate;
+      if($tmp->[0] eq 'eval'){
+         $deobfusucate = escape2control($tmp->[1]);
+      }
+      if($tmp->[0] eq 'create_function'){
+         $deobfusucate = escape2control($tmp->[2]);
+      }
+      if($tmp->[0] eq 'assert'){
+         $deobfusucate = escape2control($tmp->[1]);
+      }
+      push(@ret, $deobfusucate);
+   }
+   return \@ret;
 }
 
 sub cleanup($$){
@@ -275,21 +267,47 @@ sub main(){
 
       cleanup($ana_path, $tracelog);
 
+      my %ret;
       if($mode eq 'debug'){
-         return [ 200, [ 'Content-Type' => 'text/plain' ], [ {debug => sprintf Dumper ($func_info) } ], ];
+	 %ret = (
+		'mode' => 'debug',
+		'body' => $func_info,
+	 ); 
+         return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }
    
       if($mode eq 'trace'){
-         return [ 200, [ 'Content-Type' => 'text/plain' ], [ $trace_text ], ];
+	%ret = (
+		'mode' => 'trace',
+		'body' => $trace_text,
+	);
+         return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }     
 
       if($mode eq 'detect'){
-         # detectは関数内でHTTPヘッダを考慮した返り値を返す
-         return detect($func_info); 
+		my ($score, $msg) =  detect($func_info); 
+		if($score >= $THRESHOLD){
+			# malware判定
+			%ret = (
+				'mode' => 'detect',
+				'body' => "Detect!!($score) : " . join(", ", @$msg),
+			);
+		}else{
+			# malwareではない
+			%ret = (
+				'mode' => 'detect',
+				'body' => "None($score) : " . join(", ", @$msg),
+			);
+		}
+       	 	return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }
 
       if($mode eq 'deobfusucate'){
-         return [ 200, [ 'Content-Type' => 'text/plain' ], [ deobfusucate($stack_trace) ], ];
+	%ret = (
+		'mode' => 'deobfusucate',
+		'body' => deobfusucate($stack_trace),
+	);
+         return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }
    };
 
