@@ -14,7 +14,6 @@
 -A INPUT -m state --state NEW -m tcp -p tcp --dport {$PLACK_SERVER_PORT} -j ACCEPT
 
 -A OUTPUT -p tcp -m state --state ESTABLISHED --sport 22 -j ACCEPT
--A OUTPUT -p tcp -m state --state ESTABLISHED --sport {$PHP_BUILD_SERVER_PORT} -j ACCEPT
 -A OUTPUT -p tcp -m state --state ESTABLISHED --sport {$PLACK_SERVER_PORT} -j ACCEPT
 
 COMMIT

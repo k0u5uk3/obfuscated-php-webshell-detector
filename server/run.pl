@@ -47,10 +47,15 @@ sub main(){
 	# Templateからphp.iniを作成
 	generate_from_template("./template/custom-php.ini", {CWD => getcwd()});
 	# Templateからiptables.ruleを作成
-	generate_from_template("./template/iptables.rule", {PHP_BUILD_SERVER_PORT => "$YAML->{PHP_BUILD_SERVER_PORT}", 
-							    PLACK_SERVER_PORT  => "$YAML->{PLACK_SERVER_PORT}"});
-	print "root権限以下のコマンドを打つことでsshとPLACK SERVERTとPHP BUILD SERVER以外の通信を遮断します。\n";
+	generate_from_template("./template/iptables.rule", { PLACK_SERVER_PORT  => "$YAML->{PLACK_SERVER_PORT}" });
+	print "以下のコマンドでsshとPLACK SERVERT以外の通信を遮断します。\n";
 	print "sudo iptables-restore ./iptables.rule\n";
+    print "元に戻す時は以下の処理をコマンドを使用してください。\n";
+    print "sudo /sbin/iptables -X\n";
+    print "sudo /sbin/iptables -P INPUT ACCEPT\n";
+    print "sudo /sbin/iptables -P OUTPUT ACCEPT\n";
+    print "sudo /sbin/iptables -P FORWARD ACCEPT\n";
+    print "sudo /sbin/iptables -F\n";
 
 	# plackとphp builid in serverの起動
 	system("/usr/bin/plackup observ.psgi --host $YAML->{PLACK_SERVER_HOST} --port $YAML->{PLACK_SERVER_PORT} >> $YAML->{PLACK_SERVER_LOG} 2>&1 &");
