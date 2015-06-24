@@ -190,15 +190,19 @@ sub deobfusucate($){
    my $ret;
    foreach my $tmp (reverse @$stack_trace){
       if($tmp->[0] eq 'eval'){
-         return sprintf("%s", $tmp->[1]);        
+         $ret = $tmp->[1];
       }
       if($tmp->[0] eq 'create_function'){
-         return sprintf("%s", $tmp->[2]);        
+         $ret = $tmp->[2];
       }
        if($tmp->[0] eq 'assert'){
-         return sprintf("%s", $tmp->[1]);        
+         $ret = $tmp->[1];
       }
    }
+   # 先頭と行末のシングルクォーテションを削除
+   $ret =~ s/^\'//;
+   $ret =~ s/\'$//;
+   return sprintf("%s", $ret);        
 }
 
 sub cleanup($$){
@@ -279,9 +283,6 @@ sub main(){
 
       if($mode eq 'deobfusucate'){
          my $deobfusucate = deobfusucate($stack_trace);
-         # 先頭と行末のシングルクォーテションを削除
-         $deobfusucate =~ s/^\'//;
-         $deobfusucate =~ s/\'$//;
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ $deobfusucate ], ];
       }
    };
