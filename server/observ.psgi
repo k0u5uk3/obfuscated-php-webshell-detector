@@ -204,6 +204,7 @@ sub deobfusucate($){
    $ret =~ s/\'$//;
 
    # エスケープシーケンスを制御文字に変換
+   $ret =~ s/\\r\\n/\x{0a}/g;
    $ret =~ s/\\n/\x{0a}/g;
    $ret =~ s/\\t/\x{09}/g; 
 
