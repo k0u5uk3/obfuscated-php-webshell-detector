@@ -120,7 +120,6 @@ sub detect($){
    my @eval_func = qw(
       eval
       assert
-      preg_replace
       create_function
    );
 
