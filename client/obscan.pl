@@ -7,6 +7,7 @@ use LWP::UserAgent;
 use Getopt::Long qw(:config posix_default no_ignore_case gnu_compat);
 use File::Spec;
 use Data::Dumper;
+use JSON;
 
 our $VERBOSE=0;
 
@@ -78,10 +79,10 @@ my $ua = LWP::UserAgent->new;
 my $res = $ua->request( $req );
 if($res->is_success){
    print "$abs_filename : " if $opts{mode} eq 'detect';
-   print $res->content;
+   print Dumper($res->content);
    print "\n";
 }else{
    print "$abs_filename:";
-   print $res->content;
+   print Dumper($res->content);
    print "\n";
 }
