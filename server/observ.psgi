@@ -201,6 +201,15 @@ sub deobfusucate($){
    }
 }
 
+sub cleanup($$){
+   my $ana_path = shift;
+   my $tracelog = shift;
+   # tracelogが必要な処理が終わったらtracelogを削除する
+   unlink($tracelog) or die "Failed unlink $tracelog : $!\n" if -f $tracelog;
+   # 解析対象ファイルも削除する
+   unlink($ana_path) or die "Failed unlink $ana_path : $!\n" if -f $ana_path;
+}
+
 #-------------#
 # MAIN ROUTIN #
 #-------------#
@@ -237,11 +246,13 @@ sub main(){
 
       # MD5エラー 
       if($client_md5 ne $server_md5){
+         cleanup($ana_path, $tracelog); 
          return [ 500, [ 'Content-Type' => 'text/plain' ], [ "upload file is corrupted." ], ];
       }
 
       # 例外のハンドリング 
       if($@){
+         cleanup($ana_path, $tracelog); 
          return [ 500, [ 'Content-Type' => 'text/plain' ], [ $@ ], ];
       }
 
@@ -251,10 +262,7 @@ sub main(){
       # tracelogの生テキスト
       my $trace_text = read_file($tracelog);
 
-      # tracelogが必要な処理が終わったらtracelogを削除する
-      unlink($tracelog) or die "Failed unlink $tracelog : $!\n" if -f $tracelog;
-      # 解析対象ファイルも削除する
-      unlink($ana_path) or die "Failed unlink $ana_path : $!\n" if -f $ana_path;
+      cleanup($ana_path, $tracelog);
 
       if($mode eq 'debug'){
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ sprintf Dumper ($func_info) ], ];
