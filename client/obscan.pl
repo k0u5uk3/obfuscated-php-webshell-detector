@@ -8,10 +8,10 @@ use Getopt::Long qw(:config posix_default no_ignore_case gnu_compat);
 use File::Spec;
 use Data::Dumper;
 
-our $DEBUG=0;
+our $VERBOSE=0;
 
 sub usage{
-   printf("Usage : %s -f [filename] [-m detect|deobfusucate|trace|debug]\n", $0); 
+   printf("Usage : %s -f filename -m detect|deobfusucate|trace|debug [-v]\n", $0); 
    exit(0);
 }
 
@@ -33,13 +33,13 @@ if(! exists $opts{mode}){
 }
 
 if(exists $opts{verbose}){
-   #verboseオプションが渡っているな$DEBUGを真にする。
-   $DEBUG=1;
+   #verboseオプションが渡っているな$VERBOSEを真にする。
+   $VERBOSE=1;
 }
 
-sub debug($){
+sub verbose($){
    my $msg = shift;
-   printf("[*] $msg\n") if $DEBUG;
+   printf("[*] $msg\n") if $VERBOSE;
 }
 
 #------------#
@@ -60,7 +60,7 @@ sub get_md5($){
 
 my $target_file = $opts{filename};
 my $target_md5  = get_md5($target_file);
-my $analyze_url = "http://192.168.74.57:5000";
+my $analyze_url = "http://192.168.74.57:9999";
 
 my $req = POST(
    $analyze_url,
@@ -77,7 +77,7 @@ my $abs_filename = File::Spec->rel2abs("$opts{filename}");
 my $ua = LWP::UserAgent->new;
 my $res = $ua->request( $req );
 if($res->is_success){
-   print "$abs_filename:" if $opts{mode} eq 'detect';
+   print "$abs_filename : " if $opts{mode} eq 'detect';
    print $res->content;
    print "\n";
 }else{
