@@ -221,6 +221,7 @@ sub strip_php_code($){
 
 sub malware_detect($){
    my $codes = shift;
+   my $flag=0;
    my @mal_codes = qw(
       system exec passthru shell_exec popen proc_open pcntl_exec
    );
@@ -232,10 +233,11 @@ sub malware_detect($){
       my $strip = strip_php_code($code);            
       foreach my $mal_code (@mal_codes){
          $ret{$mal_code} = scalar( () = $strip =~ /$mal_code\(.+\)/g);
+         $flag += $ret{$mal_code}l
       }      
    }
 
-   return \%ret;
+   return ($socre,\%ret);
 }
 
 #-------------#
@@ -335,8 +337,8 @@ sub main(){
          if($score >= $THRESHOLD){
             # 難読化判定
             # 難読化を解読して危険なコードが含まれているかを確認
-            my $mal_code = malware_detect(deobfusucate($stack_trace)); 
-            if(defined $mal_code){
+            my ($mal_score, $mal_code) = malware_detect(deobfusucate($stack_trace)); 
+            if($mal_score){
                my @malmsg;
                while(my ($key, $value) = each %{$mal_code}){
                   push(@malmsg, "$key".'['."$value".']');
