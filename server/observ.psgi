@@ -10,6 +10,7 @@ use LWP::UserAgent;
 use File::Path 'mkpath';
 use Data::Dumper;
 use JSON qw(encode_json decode_json);
+use File::Temp qw/ tempfile tempdir /; 
 
 our $VERSION = "0.0.2";
 our $YAML = YAML::LoadFile("./observ.yaml");
@@ -204,13 +205,39 @@ sub deobfusucate($){
    return \@ret;
 }
 
-sub cleanup($$){
-   my $ana_path = shift;
-   my $tracelog = shift;
-   # tracelogが必要な処理が終わったらtracelogを削除する
-   unlink($tracelog) or die "Failed unlink $tracelog : $!\n" if -f $tracelog;
-   # 解析対象ファイルも削除する
-   unlink($ana_path) or die "Failed unlink $ana_path : $!\n" if -f $ana_path;
+sub cleanup($){
+   my $file = shift;
+   unlink($file) or die "Failed unlink $file : $!\n" if -f $file;
+}
+
+sub strip_php_code($){
+   my $code = shift;
+   my $fh = new File::Temp();
+   my $file = $fh->filename;
+   open $fh '>', or die "Faield write $file : $!\n";
+   print $fh $code;
+   close($fh);
+   my $strip = qx{ /usr/bin/php -w $file } ;
+   return $strip;
+}
+
+sub malware_detect($){
+   my $codes = shift;
+   my @mal_codes = qw(
+      system exec passthru shell_exec popen proc_open pcntl_exec
+   );
+
+   my %ret;
+
+   foreach my $code (@$codes){
+      next unless defined $code;
+      my $strip = strip_php_code($code);            
+      foreach my $mal_code (@mal_codes){
+         $ret{$mal_code} = scalar( () = $strip =~ /$mal_code\(.+\)/g);
+      }      
+   }
+
+   return \%ret;
 }
 
 #-------------#
@@ -227,7 +254,7 @@ sub main(){
       my $mode = $req->parameters->{mode};
 
       # mode値のチェック
-      my @allow_mode = qw(detect deobfusucate trace debug);
+      my @allow_mode = qw(detect malware-detect deobfusucate trace debug);
 
       unless(grep {$mode eq $_} @allow_mode){
          return [ 500, [ 'Content-Type' => 'text/plain' ], [ "unexcepted mode paramaeter" ], ];
@@ -249,13 +276,15 @@ sub main(){
 
       # MD5エラー 
       if($client_md5 ne $server_md5){
-         cleanup($ana_path, $tracelog); 
+         cleanup($ana_path);
+         cleanup($tracelog);
          return [ 500, [ 'Content-Type' => 'text/plain' ], [ "upload file is corrupted." ], ];
       }
 
       # 例外のハンドリング 
       if($@){
-         cleanup($ana_path, $tracelog); 
+         cleanup($ana_path);
+         cleanup($tracelog);
          return [ 500, [ 'Content-Type' => 'text/plain' ], [ $@ ], ];
       }
 
@@ -265,7 +294,8 @@ sub main(){
       # tracelogの生テキスト
       my $trace_text = read_file($tracelog);
 
-      cleanup($ana_path, $tracelog);
+      cleanup($ana_path);
+      cleanup($tracelog);
 
       my %ret;
       if($mode eq 'debug'){
@@ -297,6 +327,39 @@ sub main(){
             %ret = (
                   'mode' => 'detect',
                   'body' => "None($score) : " . join(", ", @$msg),
+                  );
+         }
+         return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
+      }
+
+      if($mode eq 'malware-detect'){
+         my ($score, $obmsg) =  detect($func_info); 
+         if($score >= $THRESHOLD){
+            # 難読化判定
+            # 難読化を解読して危険なコードが含まれているかを確認
+            my $mal_code = malware_detect(deobfusucate($stack_trace)); 
+            if(defined $mal_code){
+               my @malmsg;
+               while(my ($key, $value) = each %{$mal_code}){
+                  push(@malmsg, "$key".'['."$value".']');
+               }
+                %ret = (
+                     'mode' => 'malware-detect',
+                     'body' => "Not Malware($score) : " . join(", ", (@$obmsg, @malmsg)),
+                     );
+            }else{
+               %ret = (
+                     'mode' => 'malware-detect',
+                     'body' => "Not Malware($score) : " . join(", ", @$obmsg),
+                     );
+            }
+            return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
+         }                        
+      }else{
+            # 難読化されていない
+            %ret = (
+                  'mode' => 'malware-detect',
+                  'body' => "None($score) : " . join(", ", @$obmsg),
                   );
          }
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];

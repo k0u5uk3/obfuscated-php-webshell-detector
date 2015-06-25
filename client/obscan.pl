@@ -96,6 +96,12 @@ if($res->is_success){
    if($result->{mode} eq 'detect'){
       print "TARGET FILE [ $abs_filename ] : $result->{body}\n";
    }
+
+   # malware-detect mode output 
+   if($result->{mode} eq 'malware-detect'){
+      print "TARGET FILE [ $abs_filename ] : $result->{body}\n";
+   }
+
    # deobfusucate mode output
    if($result->{mode} eq 'deobfusucate'){
       my @deobfusucate = @{$result->{body}};
