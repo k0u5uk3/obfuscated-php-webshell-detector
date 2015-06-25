@@ -63,9 +63,9 @@ sub main(){
 	system("openssl genrsa 2048 > server.key");
 	system("openssl req -new -key server.key -out server.csr -subj '/C=JP/ST=Tokyo/L=Tokyo/O=Example Ltd./OU=Web/CN=example.com'");
 	system("openssl x509 -in server.csr -days 365 -req -signkey server.key > server.crt");
-	system("/usr/bin/plackup -s HTTP::Server::PSGI --ssl-key-file server.key --ssl-cert-file server.crt --ssl 1 observ.psgi --host $YAML->{PLACK_SERVER_HOST} --port $YAML->{PLACK_SERVER_PORT} >> $YAML->{PLACK_SERVER_LOG} 2>&1 &");
+	system("/usr/bin/plackup -s Starman -a observ.psgi --ssl-key-file server.key --ssl-cert-file server.crt --ssl 1 --host $YAML->{PLACK_SERVER_HOST} --port $YAML->{PLACK_SERVER_PORT} >> $YAML->{PLACK_SERVER_LOG} 2>&1 &");
 	}else{
-	system("/usr/bin/plackup observ.psgi --host $YAML->{PLACK_SERVER_HOST} --port $YAML->{PLACK_SERVER_PORT} >> $YAML->{PLACK_SERVER_LOG} 2>&1 &");
+	system("/usr/bin/plackup -s Starman -a observ.psgi --host $YAML->{PLACK_SERVER_HOST} --port $YAML->{PLACK_SERVER_PORT} >> $YAML->{PLACK_SERVER_LOG} 2>&1 &");
 	}
 
 	# plackとphp builid in serverの起動
