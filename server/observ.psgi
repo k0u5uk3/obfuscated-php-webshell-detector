@@ -214,9 +214,7 @@ sub strip_php_code($){
    my $code = shift;
    my $fh = new File::Temp();
    my $file = $fh->filename;
-   open $fh '>', or die "Faield write $file : $!\n";
    print $fh $code;
-   close($fh);
    my $strip = qx{ /usr/bin/php -w $file } ;
    return $strip;
 }
@@ -354,7 +352,6 @@ sub main(){
                      );
             }
             return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
-         }                        
       }else{
             # 難読化されていない
             %ret = (
