@@ -269,44 +269,44 @@ sub main(){
 
       my %ret;
       if($mode eq 'debug'){
-	 %ret = (
-		'mode' => 'debug',
-		'body' => $func_info,
-	 ); 
+         %ret = (
+               'mode' => 'debug',
+               'body' => $func_info,
+               ); 
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }
-   
+
       if($mode eq 'trace'){
-	%ret = (
-		'mode' => 'trace',
-		'body' => $trace_text,
-	);
+         %ret = (
+               'mode' => 'trace',
+               'body' => $trace_text,
+               );
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }     
 
       if($mode eq 'detect'){
-		my ($score, $msg) =  detect($func_info); 
-		if($score >= $THRESHOLD){
-			# malware判定
-			%ret = (
-				'mode' => 'detect',
-				'body' => "Detect!!($score) : " . join(", ", @$msg),
-			);
-		}else{
-			# malwareではない
-			%ret = (
-				'mode' => 'detect',
-				'body' => "None($score) : " . join(", ", @$msg),
-			);
-		}
-       	 	return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
+         my ($score, $msg) =  detect($func_info); 
+         if($score >= $THRESHOLD){
+            # 難読化判定
+            %ret = (
+                  'mode' => 'detect',
+                  'body' => "Detect!!($score) : " . join(", ", @$msg),
+                  );
+         }else{
+            # 難読化されていない
+            %ret = (
+                  'mode' => 'detect',
+                  'body' => "None($score) : " . join(", ", @$msg),
+                  );
+         }
+         return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }
 
       if($mode eq 'deobfusucate'){
-	%ret = (
-		'mode' => 'deobfusucate',
-		'body' => deobfusucate($stack_trace),
-	);
+         %ret = (
+               'mode' => 'deobfusucate',
+               'body' => deobfusucate($stack_trace),
+               );
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }
    };
