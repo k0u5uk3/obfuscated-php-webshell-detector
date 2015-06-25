@@ -221,7 +221,7 @@ sub strip_php_code($){
 
 sub malware_detect($){
    my $codes = shift;
-   my $flag=0;
+   my $score=0;
    my @mal_codes = qw(
       system exec passthru shell_exec popen proc_open pcntl_exec
    );
@@ -233,11 +233,11 @@ sub malware_detect($){
       my $strip = strip_php_code($code);            
       foreach my $mal_code (@mal_codes){
          $ret{$mal_code} = scalar( () = $strip =~ /$mal_code\(.+\)/g);
-         $flag += $ret{$mal_code}l
+         $score += $ret{$mal_code}l
       }      
    }
 
-   return ($socre,\%ret);
+   return ($score,\%ret);
 }
 
 #-------------#
