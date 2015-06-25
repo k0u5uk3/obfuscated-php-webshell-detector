@@ -233,7 +233,7 @@ sub malware_detect($){
       my $strip = strip_php_code($code);            
       foreach my $mal_code (@mal_codes){
          $ret{$mal_code} = scalar( () = $strip =~ /$mal_code\(.+\)/g);
-         $score += $ret{$mal_code}l
+         $score += $ret{$mal_code};
       }      
    }
 
