@@ -343,7 +343,7 @@ sub main(){
                }
                 %ret = (
                      'mode' => 'malware-detect',
-                     'body' => "Not Malware($score) : " . join(", ", (@$obmsg, @malmsg)),
+                     'body' => "Malware Detect!! : " . join(", ", (@$obmsg, @malmsg)),
                      );
             }else{
                %ret = (
