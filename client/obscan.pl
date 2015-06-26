@@ -117,5 +117,5 @@ if($res->is_success){
 }else{
    print "$abs_filename:";
    print $res->content;
-   print "\n";
+   die;
 }
