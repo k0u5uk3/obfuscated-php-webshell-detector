@@ -223,7 +223,7 @@ sub malware_detect($){
    my $codes = shift;
    my $score=0;
    my @mal_codes = qw(
-      system exec passthru shell_exec popen proc_open pcntl_exec
+      system exec passthru shell_exec popen proc_open pcntl_exec eval assert create_function
    );
 
    my %ret;
