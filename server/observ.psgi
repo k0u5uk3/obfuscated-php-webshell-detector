@@ -308,7 +308,7 @@ sub main(){
       }
 
       if($mode eq 'detect-webshell'){
-         my ($flag, $obmsg) =  detect($func_info); 
+         my ($flag, $obmsg) =  detect_obfuscate($func_info); 
          if($flag){
             # 難読化判定
             # 難読化を解読して危険なコードが含まれているかを確認
