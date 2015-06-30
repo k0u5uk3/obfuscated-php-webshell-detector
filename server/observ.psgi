@@ -170,7 +170,7 @@ sub detect_webshell($){
          my $count = scalar( () = $strip =~ /$webshell_code\(.+\)/g);
          if($count){  
             push(@msg, "$webshell_code($count)");
-            $flag;
+            $flag++;
          }
       }      
    }
