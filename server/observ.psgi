@@ -47,20 +47,6 @@ sub get_md5($){
    return $md5;
 }
 
-sub get_rand_string($){
-   my $length = shift;
-   my @char_tmp=();
-   push @char_tmp, ('a'..'z');
-   push @char_tmp, ('A'..'Z');
-   push @char_tmp, (0..9);
-
-   my $str;
-   for(my $i=1; $i<=$length; $i++){
-      $str .= $char_tmp[int(rand($#char_tmp+1))];
-   }
-   return $str;
-}
-
 sub get_tracelog($){
    my $file_name = shift;
 
