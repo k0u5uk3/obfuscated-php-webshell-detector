@@ -14,7 +14,7 @@ use File::Temp qw/ tempfile tempdir /;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use K0U5UK3::Error qw($DEBUG $WARNING debug warning critical);
-use K0U5UK3::Util qw(cleanup get_md5);
+use K0U5UK3::Util qw(read_file cleanup get_md5);
 use K0U5UK3::OPWD qw();
 
 our $YAML = YAML::LoadFile("$Bin/../settings.yaml");
