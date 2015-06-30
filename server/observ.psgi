@@ -23,7 +23,6 @@ our $YAML = YAML::LoadFile("$Bin/../settings.yaml");
 # SUB ROUTIN # 
 #------------#
 
-
 #---------------------------------------------------------------------
 # parse_tracelogはハッシュリファレンスとリストリファレンスを返す。
 # ハッシュリファレンスは関数名と呼び出し回数を保持しており
@@ -63,48 +62,7 @@ sub parse_tracelog($){
    return (\%func_count, \@stack_trace);
 }
 
-sub detect_obfuscate($){
-   my $info = shift;
-   my @msg;
-   
-   # このフラグが両方立った時、難読化ファイルとして判定する
-   # これは復号処理のための関数と、
-   # 再評価のための関数が難読化ファイルの実行のために必要であるため
-   my ($eval_flag, $deobfuscate_flag);
 
-   # コード再評価のための関数
-   # preg_replaceのeオプションは内部でevalとして処理されるので含めない
-   my @eval_func = qw(eval assert create_function);
-
-   # コード復号化のための関数
-   my @deobfuscate_func = qw(base64_decode gzinflate str_rot13 
-                             gzuncompress strrev rawurldecode);
-
-   map{ 
-      my $key = $_;
-      if(grep { $key eq $_ } @eval_func){
-         my $count = $info->{$key};
-         push(@msg, "$key($count)");
-         $eval_flag++;
-      }
-   } keys %$info;
-
-   # コード再評価関数の使用に基づきスコアリング
-   map{ 
-      my $key = $_;
-      if(grep { $key eq $_ } @deobfuscate_func){
-         my $count = $info->{$key};
-         push(@msg, "$key($count)");
-         $deobfuscate_flag++;
-      }
-   } keys %$info;
-
-   if($eval_flag && $deobfuscate_flag){
-      return (1, \@msg);
-   }else{
-      return (0, \@msg);
-   }
-}
 
 sub escape2control($){
    my $string = shift;
@@ -150,26 +108,74 @@ sub strip_php_code($){
    return $strip;
 }
 
-sub malware_detect($){
+sub detect_obfuscate($){
+   my $info = shift;
+   my @msg;
+   
+   # このフラグが両方立った時、難読化ファイルとして判定する
+   # これは復号処理のための関数と、
+   # 再評価のための関数が難読化ファイルの実行のために必要であるため
+   my ($eval_flag, $deobfuscate_flag);
+
+   # コード再評価のための関数
+   # preg_replaceのeオプションは内部でevalとして処理されるので含めない
+   my @eval_func = qw(eval assert create_function);
+
+   # コード復号化のための関数
+   my @deobfuscate_func = qw(base64_decode gzinflate str_rot13 
+                             gzuncompress strrev rawurldecode);
+
+   map{ 
+      my $key = $_;
+      if(grep { $key eq $_ } @eval_func){
+         my $count = $info->{$key};
+         push(@msg, "$key($count)");
+         $eval_flag++;
+      }
+   } keys %$info;
+
+   # コード再評価関数の使用に基づきスコアリング
+   map{ 
+      my $key = $_;
+      if(grep { $key eq $_ } @deobfuscate_func){
+         my $count = $info->{$key};
+         push(@msg, "$key($count)");
+         $deobfuscate_flag++;
+      }
+   } keys %$info;
+
+   if($eval_flag && $deobfuscate_flag){
+      return (1, \@msg);
+   }else{
+      return (0, \@msg);
+   }
+}
+
+sub detect_webshell($){
    my $codes = shift;
-   my $score=0;
-   my @mal_codes = qw(
+   my $flag=0;
+   my @msg;
+
+   # 以下の関数がひとつでも使用されているならwebshellとみなす
+   # ここにはpreg_replaceを含めるべきではないか？
+   my @webshell_codes = qw(
       system exec passthru shell_exec popen proc_open 
       pcntl_exec eval assert create_function
    );
 
-   my %ret;
-
    foreach my $code (@$codes){
       next unless defined $code;
       my $strip = strip_php_code($code);            
-      foreach my $mal_code (@mal_codes){
-         $ret{$mal_code} = scalar( () = $strip =~ /$mal_code\(.+\)/g);
-         $score += $ret{$mal_code};
+      foreach my $webshell_code (@webshell_codes){
+         my $count = scalar( () = $strip =~ /$webshell_code\(.+\)/g);
+         if($count){  
+            push(@msg, "$webshell_code($count)");
+            $flag;
+         }
       }      
    }
 
-   return ($score,\%ret);
+   return ($flag,\@msg);
 }
 
 #-------------#
@@ -270,6 +276,7 @@ sub main(){
       #------------------#
 
       # $func_infoは関数名と出現回数を記録したハッシュリファレンス
+      # $stack_traceは関数呼び出しと引数を順序を考慮し格納したリストリファレンス
       my ($func_info,$stack_trace) = parse_tracelog($tracelog_file);
       # tracelogの生テキスト
       my $trace_text = read_file($tracelog_file);
@@ -278,79 +285,63 @@ sub main(){
       cleanup($ana_path);
       cleanup($tracelog_file);
 
+      #--------------------------#
+      # モードにより返り値を分岐 #
+      #--------------------------#
+
       my %ret;
+
+      # [viewfunc]は呼ばれた関数の一覧とその回数を出力する
       if($mode eq 'viewfunc'){
-         %ret = (
-               'mode' => 'viewfunc',
-               'body' => $func_info,
-               ); 
+         %ret = ( 'mode' => 'viewfunc', 'body' => $func_info,); 
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }
 
+      # [tracelog]はxdebugにより取得されたtracelogをそのまま返す 
       if($mode eq 'tracelog'){
-         %ret = (
-               'mode' => 'tracelog',
-               'body' => $trace_text,
-               );
+         %ret = ( 'mode' => 'tracelog', 'body' => $trace_text,);
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }     
 
+      # [detect-obfuscate]は難読化されたファイルか否かを判定し、結果を返す
       if($mode eq 'detect-obfuscate'){
          my ($flag, $msg) =  detect_obfuscate($func_info); 
          if($flag){
             # 難読化判定
-            %ret = (
-                  'mode' => 'detect-obfuscate',
-                  'body' => "Obfusucate File : " . join(", ", @$msg),
-                  );
+            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "Obfusucate : " . join(", ", @$msg),);
          }else{
             # 難読化されていない
-            %ret = (
-                  'mode' => 'detect-obfuscate',
-                  'body' => "Not Obfusucate File: " . join(", ", @$msg),
-                  );
+            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "Not Obfusucate : " . join(", ", @$msg),);
          }
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }
 
-      if($mode eq 'detect-webshell'){
-         my ($flag, $obmsg) =  detect_obfuscate($func_info); 
-         if($flag){
-            # 難読化判定
-            # 難読化を解読して危険なコードが含まれているかを確認
-            my ($mal_score, $mal_code) = malware_detect(deobfusucate($stack_trace)); 
-            if($mal_score){
-               my @malmsg;
-               while(my ($key, $value) = each %{$mal_code}){
-                  push(@malmsg, "$key".'['."$value".']');
-               }
-                %ret = (
-                     'mode' => 'detect-webshell',
-                     'body' => "WebShell Detect!! : " . join(", ", (@$obmsg, @malmsg)),
-                     );
-            }else{
-               %ret = (
-                     'mode' => 'detect-webshell',
-                     'body' => "Not WebShell File : " . join(", ", @$obmsg),
-                     );
-            }
-            return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
-      }else{
-            # 難読化されていない
-            %ret = (
-                  'mode' => 'detect-webshell',
-                  'body' => "Not Obfusucate File: " . join(", ", @$obmsg),
-                  );
-         }
-         return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
-      }
-
+      # [deobfuscate]は再評価処理に渡された引数を全て返す
       if($mode eq 'deobfuscate'){
          %ret = (
                'mode' => 'deobfuscate',
                'body' => deobfusucate($stack_trace),
                );
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
+      }
+
+      # [detect-webshell]は難読化されたwebshellか否かを判定し、結果を返す。
+      if($mode eq 'detect-webshell'){
+         my ($obfuscate_flag, $obfuscate_msg) =  detect_obfuscate($func_info); 
+         unless($obfuscate_flag){
+            # 難読化されていないファイル
+            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "Not Obfusucate : " . join(", ", @$obfuscate_msg),);
+         }
+
+         # 以降難読化されているファイルであるためwebshellか否かの判定を行う
+         my ($webshell_flag, $webshell_msg) = detect_webshell(deobfusucate($stack_trace));
+         unless($webshell_flag){
+            # 難読化されているがwebshellではない
+            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "Obfusucate Not Webshell: " . join(", ", @$obfuscate_msg, @$webshell_msg),);
+         }else{
+            # 難読化されているWebShellである
+            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "Obfusucate Webshell: " . join(", ", @$obfuscate_msg, @$webshell_msg),);
+         }
       }
    };
 

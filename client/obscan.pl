@@ -84,36 +84,43 @@ unless($response->is_success){
 
 # 以降はSANDBOXから正常なレスポンスを受け取ったとみなす。
 my $result = decode_json($response->content);
-# debug mode output 
+
+# [viewfunc]は呼ばれた関数の一覧とその回数を出力する
 if($result->{mode} eq 'viewfunc'){
    print "TARGET FILE [ $abs_filename ]\n";
    foreach my $key (sort {$b cmp $a} keys %{$result->{body}}){
-      print "$key".'['.$result->{body}->{$key}.']'."\n";
+      print "$key".'('.$result->{body}->{$key}.')'."\n";
    }
 }
-# trace mode output
+
+# [tracelog]はxdebugにより取得されたtracelogをそのまま返す 
 if($result->{mode} eq 'tracelog'){
    print "TARGET FILE [ $abs_filename ]\n";
    print $result->{body};
 }
-# detect mode output 
+
+# [detect-obfuscate]は難読化されたファイルか否かを判定し、結果を返す
 if($result->{mode} eq 'detect-obfuscate'){
    print "TARGET FILE [ $abs_filename ] : $result->{body}\n";
 }
 
-# malware-detect mode output 
+# [deobfuscate]は再評価処理に渡された引数を全て返す
+if($result->{mode} eq 'deobfuscate'){
+   my @deobfuscate = @{$result->{body}};
+   my $i=0;
+   foreach my $deobfuscate (@deobfuscate){
+      next unless defined $deobfuscate;
+      printf("/*** [OPWD STEP %0d ]***/\n", $i);
+      print $deobfuscate . "\n";
+      $i++;
+   }
+}
+
+# [detect-webshell]は難読化されたwebshellか否かを判定し、結果を返す。
 if($result->{mode} eq 'detect-webshell'){
    print "TARGET FILE [ $abs_filename ] : $result->{body}\n";
 }
 
-# deobfusucate mode output
-if($result->{mode} eq 'deobfuscate'){
-   my @deobfusucate = @{$result->{body}};
-   my $i=0;
-   foreach my $deob (@deobfusucate){
-      next unless defined $deob;
-      print "/*** Obfusucated-PHP-Detector STEP $i ***/\n";
-      print $deob . "\n";
-      $i++;
-   }
-}
+
+
+exit;
