@@ -95,7 +95,7 @@ my $response = $ua->request( $req );
 # ERRORハンドリング
 unless($response->is_success){
    # レスポンスコードが200以外ならエラーの原因を通知し、適切な処理を行う。
-   if($ersponse->code == 500){
+   if($response->code == 500){
       die "abs_filename: ".$response->content."\n";
    }else{
       die "unexpect error!!\n";
