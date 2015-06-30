@@ -2,7 +2,7 @@ package K0U5UK3::Error;
 require Exporter;
 use Exporter;
 @ISA = qw(Exporter);
-@EXPORT_OK = qw(debug warning critical);
+@EXPORT_OK = qw($DEBUG $WARNING debug warning critical);
 use Carp qw(carp cluck croak confess);
 use strict;
 use warnings;
@@ -17,7 +17,7 @@ sub timestamp($){
 
    my $fmt = "%04d/%02d/%02d(%s) %02d:%02d:%02d";
    my $timestamp =  sprintf($fmt, $year+1900,$mon+1,$mday,substr(localtime, 0, 3), $hour,$min,$sec);
-   return $tampstamp;
+   return $timestamp;
 }
 
 # debugは単純にメッセージだけを出力する
