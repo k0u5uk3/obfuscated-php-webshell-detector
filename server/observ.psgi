@@ -325,7 +325,7 @@ sub main(){
             }else{
                %ret = (
                      'mode' => 'detect-webshell',
-                     'body' => "Not WebShell($score) : " . join(", ", @$obmsg),
+                     'body' => "Not WebShell File : " . join(", ", @$obmsg),
                      );
             }
             return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
@@ -333,7 +333,7 @@ sub main(){
             # 難読化されていない
             %ret = (
                   'mode' => 'detect-webshell',
-                  'body' => "None($score) : " . join(", ", @$obmsg),
+                  'body' => "Not Obfusucate File: " . join(", ", @$obmsg),
                   );
          }
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
