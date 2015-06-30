@@ -82,43 +82,44 @@ my $request = POST(
 # POSTリクエストを作成し、レスポンスを得る。
 my $response = $ua->request( $request );
 
-if($response->is_success){
-   my $result = decode_json($response->content);
-   # debug mode output 
-   if($result->{mode} eq 'viewfunc'){
-      print "TARGET FILE [ $abs_filename ]\n";
-      foreach my $key (sort {$b cmp $a} keys %{$result->{body}}){
-         print "$key".'['.$result->{body}->{$key}.']'."\n";
-      }
-   }
-   # trace mode output
-   if($result->{mode} eq 'tracelog'){
-      print "TARGET FILE [ $abs_filename ]\n";
-      print $result->{body};
-   }
-   # detect mode output 
-   if($result->{mode} eq 'detect-obfuscate'){
-      print "TARGET FILE [ $abs_filename ] : $result->{body}\n";
-   }
+# ERROR処理
+unless($response->is_success){
+   my $code = $response->code;
+   die "$abs_filename: [$code] ".$response->content."\n";
+}
 
-   # malware-detect mode output 
-   if($result->{mode} eq 'detect-webshell'){
-      print "TARGET FILE [ $abs_filename ] : $result->{body}\n";
+# 以降はSANDBOXから正常なレスポンスを受け取ったとみなす。
+my $result = decode_json($response->content);
+# debug mode output 
+if($result->{mode} eq 'viewfunc'){
+   print "TARGET FILE [ $abs_filename ]\n";
+   foreach my $key (sort {$b cmp $a} keys %{$result->{body}}){
+      print "$key".'['.$result->{body}->{$key}.']'."\n";
    }
+}
+# trace mode output
+if($result->{mode} eq 'tracelog'){
+   print "TARGET FILE [ $abs_filename ]\n";
+   print $result->{body};
+}
+# detect mode output 
+if($result->{mode} eq 'detect-obfuscate'){
+   print "TARGET FILE [ $abs_filename ] : $result->{body}\n";
+}
 
-   # deobfusucate mode output
-   if($result->{mode} eq 'deobfuscate'){
-      my @deobfusucate = @{$result->{body}};
-      my $i=0;
-      foreach my $deob (@deobfusucate){
-         next unless defined $deob;
-         print "/*** Obfusucated-PHP-Detector STEP $i ***/\n";
-         print $deob . "\n";
-         $i++;
-      }
+# malware-detect mode output 
+if($result->{mode} eq 'detect-webshell'){
+   print "TARGET FILE [ $abs_filename ] : $result->{body}\n";
+}
+
+# deobfusucate mode output
+if($result->{mode} eq 'deobfuscate'){
+   my @deobfusucate = @{$result->{body}};
+   my $i=0;
+   foreach my $deob (@deobfusucate){
+      next unless defined $deob;
+      print "/*** Obfusucated-PHP-Detector STEP $i ***/\n";
+      print $deob . "\n";
+      $i++;
    }
-}else{
-   print "$abs_filename:";
-   print $response->content;
-   die;
 }
