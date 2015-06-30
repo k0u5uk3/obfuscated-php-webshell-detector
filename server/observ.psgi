@@ -290,7 +290,7 @@ sub main(){
       }     
 
       if($mode eq 'detect-obfuscate'){
-         my ($flag, $msg) =  detect($func_info); 
+         my ($flag, $msg) =  detect_obfuscate($func_info); 
          if($flag){
             # 難読化判定
             %ret = (
