@@ -50,6 +50,7 @@ if(! exists $opts{mode}){
    $opts{mode} = 'detect-webshell';
 }
 
+# オプションから必要な変数を作成する。
 my $target_file = $opts{filename};
 my $abs_filename = File::Spec->rel2abs("$opts{filename}");
 my $target_md5  = get_md5($target_file);
