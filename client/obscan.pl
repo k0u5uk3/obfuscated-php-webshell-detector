@@ -12,7 +12,7 @@ use JSON qw(encode_json decode_json);
 our $VERBOSE=0;
 
 sub usage{
-   printf("Usage : %s -f filename -m detect|malware-detect|deobfusucate|trace|debug [-v]\n", $0); 
+   printf("Usage : %s -f filename -m detect-obfuscate|detect-webshell|deobfuscate|tracelog|viewfunc [-v]\n", $0); 
    exit(0);
 }
 
@@ -30,7 +30,7 @@ if(! exists $opts{filename}){
 
 if(! exists $opts{mode}){
    #modeオプションが渡っていないならdetectに設定する
-   $opts{mode} = 'detect';
+   $opts{mode} = 'detect-webshell';
 }
 
 if(exists $opts{verbose}){
@@ -79,32 +79,33 @@ my $ua = LWP::UserAgent->new;
 #$ua->ssl_opts( verify_hostname => 0 );
 $ua->timeout(5);
 my $res = $ua->request( $req );
+
 if($res->is_success){
    my $result = decode_json($res->content);
    # debug mode output 
-   if($result->{mode} eq 'debug'){
+   if($result->{mode} eq 'viewfunc'){
       print "TARGET FILE [ $abs_filename ]\n";
       foreach my $key (sort {$b cmp $a} keys %{$result->{body}}){
          print "$key".'['.$result->{body}->{$key}.']'."\n";
       }
    }
    # trace mode output
-   if($result->{mode} eq 'trace'){
+   if($result->{mode} eq 'tracelog'){
       print "TARGET FILE [ $abs_filename ]\n";
       print $result->{body};
    }
    # detect mode output 
-   if($result->{mode} eq 'detect'){
+   if($result->{mode} eq 'detect-obfuscate'){
       print "TARGET FILE [ $abs_filename ] : $result->{body}\n";
    }
 
    # malware-detect mode output 
-   if($result->{mode} eq 'malware-detect'){
+   if($result->{mode} eq 'detect-webshell'){
       print "TARGET FILE [ $abs_filename ] : $result->{body}\n";
    }
 
    # deobfusucate mode output
-   if($result->{mode} eq 'deobfusucate'){
+   if($result->{mode} eq 'deobfuscate'){
       my @deobfusucate = @{$result->{body}};
       my $i=0;
       foreach my $deob (@deobfusucate){

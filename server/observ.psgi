@@ -254,7 +254,7 @@ sub main(){
       my $mode = $req->parameters->{mode};
 
       # mode値のチェック
-      my @allow_mode = qw(detect malware-detect deobfusucate trace debug);
+      my @allow_mode = qw(detect-obfuscate detect-webshell deobfuscate tracelog viewfunc);
 
       unless(grep {$mode eq $_} @allow_mode){
          return [ 500, [ 'Content-Type' => 'text/plain' ], [ "unexcepted mode paramaeter" ], ];
@@ -298,41 +298,41 @@ sub main(){
       cleanup($tracelog);
 
       my %ret;
-      if($mode eq 'debug'){
+      if($mode eq 'viewfunc'){
          %ret = (
-               'mode' => 'debug',
+               'mode' => 'viewfunc',
                'body' => $func_info,
                ); 
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }
 
-      if($mode eq 'trace'){
+      if($mode eq 'tracelog'){
          %ret = (
-               'mode' => 'trace',
+               'mode' => 'tracelog',
                'body' => $trace_text,
                );
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }     
 
-      if($mode eq 'detect'){
+      if($mode eq 'detect-obfuscate'){
          my ($score, $msg) =  detect($func_info); 
          if($score >= $THRESHOLD){
             # 難読化判定
             %ret = (
-                  'mode' => 'detect',
+                  'mode' => 'detect-obfuscate',
                   'body' => "Detect!!($score) : " . join(", ", @$msg),
                   );
          }else{
             # 難読化されていない
             %ret = (
-                  'mode' => 'detect',
+                  'mode' => 'detect-obfuscate',
                   'body' => "None($score) : " . join(", ", @$msg),
                   );
          }
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }
 
-      if($mode eq 'malware-detect'){
+      if($mode eq 'detect-webshell'){
          my ($score, $obmsg) =  detect($func_info); 
          if($score >= $THRESHOLD){
             # 難読化判定
@@ -344,29 +344,29 @@ sub main(){
                   push(@malmsg, "$key".'['."$value".']');
                }
                 %ret = (
-                     'mode' => 'malware-detect',
-                     'body' => "Malware Detect!! : " . join(", ", (@$obmsg, @malmsg)),
+                     'mode' => 'detect-webshell',
+                     'body' => "WebShell Detect!! : " . join(", ", (@$obmsg, @malmsg)),
                      );
             }else{
                %ret = (
-                     'mode' => 'malware-detect',
-                     'body' => "Not Malware($score) : " . join(", ", @$obmsg),
+                     'mode' => 'detect-webshell',
+                     'body' => "Not WebShell($score) : " . join(", ", @$obmsg),
                      );
             }
             return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }else{
             # 難読化されていない
             %ret = (
-                  'mode' => 'malware-detect',
+                  'mode' => 'detect-webshell',
                   'body' => "None($score) : " . join(", ", @$obmsg),
                   );
          }
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }
 
-      if($mode eq 'deobfusucate'){
+      if($mode eq 'deobfuscate'){
          %ret = (
-               'mode' => 'deobfusucate',
+               'mode' => 'deobfuscate',
                'body' => deobfusucate($stack_trace),
                );
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
