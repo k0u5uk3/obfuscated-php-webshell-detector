@@ -122,14 +122,14 @@ sub detect_obfuscate($){
    # コード再評価関数の使用に基づきスコアリング
    map{ 
       my $key = $_;
-      if(grep { $key eq $_ } @obfuscate_func){
+      if(grep { $key eq $_ } @deobfuscate_func){
          my $count = $info->{$key};
          push(@msg, "$key($count)");
          $deobfuscate_flag++;
       }
    } keys %$info;
 
-   if($eval_flag && $debfuscate_flag){
+   if($eval_flag && $deobfuscate_flag){
       return (1, \@msg);
    }else{
       return (0, \@msg);
@@ -307,6 +307,8 @@ sub main(){
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }
 
+#debug
+my $THRESHOLD=100;
       if($mode eq 'detect-webshell'){
          my ($score, $obmsg) =  detect($func_info); 
          if($score >= $THRESHOLD){
