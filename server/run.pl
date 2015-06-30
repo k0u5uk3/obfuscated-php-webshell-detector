@@ -7,8 +7,9 @@ use Text::Template;
 use File::Basename qw/basename/;
 use File::Path 'mkpath';
 use Cwd 'getcwd';
+use FindBin qw($Bin);
 
-our $YAML = YAML::LoadFile("./observ.yaml");
+our $YAML = YAML::LoadFile("$Bin/../settings.yaml");
 
 #-----------#
 # SUB ROUTN #
