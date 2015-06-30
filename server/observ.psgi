@@ -307,11 +307,9 @@ sub main(){
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }
 
-#debug
-my $THRESHOLD=100;
       if($mode eq 'detect-webshell'){
-         my ($score, $obmsg) =  detect($func_info); 
-         if($score >= $THRESHOLD){
+         my ($flag, $obmsg) =  detect($func_info); 
+         if($flag){
             # 難読化判定
             # 難読化を解読して危険なコードが含まれているかを確認
             my ($mal_score, $mal_code) = malware_detect(deobfusucate($stack_trace)); 
