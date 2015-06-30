@@ -11,10 +11,9 @@ use File::Path 'mkpath';
 use Data::Dumper;
 use JSON qw(encode_json decode_json);
 use File::Temp qw/ tempfile tempdir /; 
-use FindBin qw($Bin);
 
-our $VERSION = "0.0.3";
-our $YAML = YAML::LoadFile("$Bin/../settings.yaml");
+our $VERSION = "0.0.2";
+our $YAML = YAML::LoadFile("./observ.yaml");
 our $THRESHOLD = 50;
 
 #------------#
@@ -245,8 +244,6 @@ sub malware_detect($){
 # MAIN ROUTIN #
 #-------------#
 sub main(){
-
-   # plack application handler 
    my $app = sub {
       # obscan.plからのパラメータ取得
       my $req = Plack::Request->new(shift);
@@ -254,10 +251,10 @@ sub main(){
       my $file_name = $uploads->{data}->{filename};    # 対象ファイル名
       my $file_path = $uploads->{data}->{tempname};    # 対象ファイルの一時保存先
       my $client_md5 = $req->parameters->{md5};        # 対象ファイルのCLIENT側で取得したmd5
-      my $mode = $req->parameters->{mode};             # 動作モード
+      my $mode = $req->parameters->{mode};
 
       # mode値のチェック
-      my @allow_mode = qw(obfuscated-detect webshell-detect deobfuscated tracelog internal);
+      my @allow_mode = qw(detect malware-detect deobfusucate trace debug);
 
       unless(grep {$mode eq $_} @allow_mode){
          return [ 500, [ 'Content-Type' => 'text/plain' ], [ "unexcepted mode paramaeter" ], ];
@@ -301,41 +298,41 @@ sub main(){
       cleanup($tracelog);
 
       my %ret;
-      if($mode eq 'internal'){
+      if($mode eq 'debug'){
          %ret = (
-               'mode' => 'internal',
+               'mode' => 'debug',
                'body' => $func_info,
                ); 
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }
 
-      if($mode eq 'tracelog'){
+      if($mode eq 'trace'){
          %ret = (
-               'mode' => 'tracelog',
+               'mode' => 'trace',
                'body' => $trace_text,
                );
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }     
 
-      if($mode eq 'obfuscated-detect'){
+      if($mode eq 'detect'){
          my ($score, $msg) =  detect($func_info); 
          if($score >= $THRESHOLD){
             # 難読化判定
             %ret = (
-                  'mode' => 'obfuscated-detect',
+                  'mode' => 'detect',
                   'body' => "Detect!!($score) : " . join(", ", @$msg),
                   );
          }else{
             # 難読化されていない
             %ret = (
-                  'mode' => 'obfusucatd-detect',
+                  'mode' => 'detect',
                   'body' => "None($score) : " . join(", ", @$msg),
                   );
          }
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }
 
-      if($mode eq 'webshell-detect'){
+      if($mode eq 'malware-detect'){
          my ($score, $obmsg) =  detect($func_info); 
          if($score >= $THRESHOLD){
             # 難読化判定
@@ -347,29 +344,29 @@ sub main(){
                   push(@malmsg, "$key".'['."$value".']');
                }
                 %ret = (
-                     'mode' => 'webshell-detect',
-                     'body' => "WebShell Detect!! : " . join(", ", (@$obmsg, @malmsg)),
+                     'mode' => 'malware-detect',
+                     'body' => "Malware Detect!! : " . join(", ", (@$obmsg, @malmsg)),
                      );
             }else{
                %ret = (
-                     'mode' => 'webshell-detect',
-                     'body' => "Not WebShell($score) : " . join(", ", @$obmsg),
+                     'mode' => 'malware-detect',
+                     'body' => "Not Malware($score) : " . join(", ", @$obmsg),
                      );
             }
             return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }else{
             # 難読化されていない
             %ret = (
-                  'mode' => 'webshell-detect',
+                  'mode' => 'malware-detect',
                   'body' => "None($score) : " . join(", ", @$obmsg),
                   );
          }
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }
 
-      if($mode eq 'deobfuscate'){
+      if($mode eq 'deobfusucate'){
          %ret = (
-               'mode' => 'deobfuscate',
+               'mode' => 'deobfusucate',
                'body' => deobfusucate($stack_trace),
                );
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
