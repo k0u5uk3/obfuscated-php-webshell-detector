@@ -11,10 +11,11 @@ use File::Path 'mkpath';
 use Data::Dumper;
 use JSON qw(encode_json decode_json);
 use File::Temp qw/ tempfile tempdir /; 
+use FindBin qw($Bin);
 
 our $VERSION = "0.0.2";
-our $YAML = YAML::LoadFile("./observ.yaml");
 our $THRESHOLD = 50;
+our $YAML = YAML::LoadFile("$Bin/../settings.yaml");
 
 #------------#
 # SUB ROUTIN # 

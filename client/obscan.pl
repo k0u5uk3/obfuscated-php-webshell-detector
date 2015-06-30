@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+use YAML;
 use Digest::MD5;
 use HTTP::Request::Common;
 use LWP::UserAgent;
@@ -8,8 +9,10 @@ use Getopt::Long qw(:config posix_default no_ignore_case gnu_compat);
 use File::Spec;
 use Data::Dumper;
 use JSON qw(encode_json decode_json);
+use FindBin qw($Bin);
 
 our $VERBOSE=0;
+our $YAML = YAML::LoadFile("$Bin/../settings.yaml");
 
 sub usage{
    printf("Usage : %s -f filename -m detect-obfuscate|detect-webshell|deobfuscate|tracelog|viewfunc [-v]\n", $0); 
