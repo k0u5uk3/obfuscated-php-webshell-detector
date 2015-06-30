@@ -318,10 +318,7 @@ sub main(){
 
       # [deobfuscate]は再評価処理に渡された引数を全て返す
       if($mode eq 'deobfuscate'){
-         %ret = (
-               'mode' => 'deobfuscate',
-               'body' => deobfusucate($stack_trace),
-               );
+         %ret = ( 'mode' => 'deobfuscate', 'body' => deobfusucate($stack_trace),);
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }
 
@@ -342,6 +339,8 @@ sub main(){
             # 難読化されているWebShellである
             %ret = ( 'mode' => 'detect-obfuscate', 'body' => "Obfusucate Webshell: " . join(", ", @$obfuscate_msg, @$webshell_msg),);
          }
+
+         return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }
    };
 
