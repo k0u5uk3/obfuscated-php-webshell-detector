@@ -1,3 +1,11 @@
+#------------------#
+# GENERAL SETTINGS #
+#------------------#
+
+
+#------------------#
+# SANDBOX SETTINGS #
+#------------------#
 WEBROOT: /tmp/obfusucated-php-detector/webroot/
 TRACELOG_DIR: /tmp/obfusucated-php-detector/tracelog/
 PHP_BUILD_SERVER_HOST: 127.0.0.1
@@ -7,3 +15,8 @@ PLACK_SERVER_PORT: 9999
 PHP_BUILD_SERVER_LOG: ./logs/php_build_server.log
 PLACK_SERVER_LOG: ./logs/plack_server.log
 USING_HTTPS: 0
+
+#-----------------#
+# CLINET SETTINGS #
+#-----------------#
+
