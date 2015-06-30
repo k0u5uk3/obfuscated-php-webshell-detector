@@ -14,7 +14,7 @@ use File::Temp qw/ tempfile tempdir /;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use K0U5UK3::Error qw($DEBUG $WARNING debug warning critical);
-use K0U5UK3::Util qw(get_md5);
+use K0U5UK3::Util qw(cleanup get_md5);
 use K0U5UK3::OPWD qw();
 
 our $YAML = YAML::LoadFile("$Bin/../settings.yaml");
@@ -22,37 +22,7 @@ our $YAML = YAML::LoadFile("$Bin/../settings.yaml");
 #------------#
 # SUB ROUTIN # 
 #------------#
-sub decide_file_location($$){
-   my $file_path = shift;
-   my $file_name = shift;
-   my $ana_path = $YAML->{WEBROOT} . $file_name;
 
-   # $file_pathが存在することを確認
-   if(! -f $file_path){
-      die "Not exists $file_path";
-   }
-
-   # 対象ファイルの解析場所に移す
-   move $file_path, $ana_path or critical "Faild move $file_path to $ana_path : $!\n";
-
-   # 解析場所に移したphpファイルを実行可能にする
-   chmod 0444, $ana_path or critical "Failed change permission $ana_path\n";
-
-   return $ana_path;
-}
-
-sub get_tracelog($){
-   my $file_name = shift;
-
-   # ブラウザの作成
-   my $ua = LWP::UserAgent->new;
-   $ua->agent("OPWD CLIENT");
-   # 解析PHPをApache経由で実行し、Xdebugにtracelogを吐かせる
-   my $response = $ua->get("http://$YAML->{PHP_BUILD_SERVER_HOST}:$YAML->{PHP_BUILD_SERVER_PORT}/$file_name");
-   die "Failed execute http://$YAML->{PHP_BUILD_SERVER_HOST}:$YAML->{PHP_BUILD_SERVER_PORT}/$file_name" unless $response->is_success;
-
-   return "$YAML->{TRACELOG_DIR}".$file_name.".xt";
-}
 
 #---------------------------------------------------------------------
 # parse_tracelogはハッシュリファレンスとリストリファレンスを返す。
@@ -136,16 +106,6 @@ sub detect_obfuscate($){
    }
 }
 
-sub read_file($){
-   my $file = shift;
-   my $text;
-   open my $fh, '<', $file or die "Failed read $file : $!\n";
-   local $/ = undef;
-   $text = <$fh>;
-   close($fh);
-   return $text;
-}
-
 sub escape2control($){
    my $string = shift;
    # 先頭と行末のシングルクォーテションを削除
@@ -181,11 +141,6 @@ sub deobfusucate($){
    return \@ret;
 }
 
-sub cleanup($){
-   my $file = shift;
-   unlink($file) or die "Failed unlink $file : $!\n" if -f $file;
-}
-
 sub strip_php_code($){
    my $code = shift;
    my $fh = new File::Temp();
@@ -199,7 +154,8 @@ sub malware_detect($){
    my $codes = shift;
    my $score=0;
    my @mal_codes = qw(
-      system exec passthru shell_exec popen proc_open pcntl_exec eval assert create_function
+      system exec passthru shell_exec popen proc_open 
+      pcntl_exec eval assert create_function
    );
 
    my %ret;
@@ -225,52 +181,102 @@ sub main(){
       my $req = Plack::Request->new(shift);
       my $uploads = $req->uploads;
       my $file_name = $uploads->{data}->{filename};    # 対象ファイル名
-      my $file_path = $uploads->{data}->{tempname};    # 対象ファイルの一時保存先
+      my $tmp_path = $uploads->{data}->{tempname};    # 対象ファイルの一時保存先
       my $client_md5 = $req->parameters->{md5};        # 対象ファイルのCLIENT側で取得したmd5
       my $mode = $req->parameters->{mode};             # mode
 
       # mode値のチェック
       my @allow_mode = qw(detect-obfuscate detect-webshell deobfuscate tracelog viewfunc);
       unless(grep {$mode eq $_} @allow_mode){
-         return [ 500, [ 'Content-Type' => 'text/plain' ], [ "unexcepted mode paramaeter" ], ];
+         return [ 500, [ 'Content-Type' => 'text/plain' ], [ "Unexcepted mode paramaeter" ], ];
       }
 
-      my $ana_path;
-      my $server_md5;
-      my $tracelog;
+      #--------------#
+      # 解析準備処理 #
+      #--------------#
 
-      # eval内の関数はdieする可能性があるのでtrapする。
+      # plackによりアップロードされたファイルはテンポラリファイルとして所定の位置に配置される。
+      # これを解析場所に配置する。
+      unless(-f $tmp_path){
+         # もしテンポラリファイルが存在しないならエラーを返す
+         return [ 500, [ 'Content-Type' => 'text/plain' ], [ "Not found temporary file" ], ];
+      }
+      
+      # クライアントから渡されたファイル名を元に解析場所に配置した完全なファイルパスを取得する       
+      my $ana_path = $YAML->{WEBROOT} . $file_name;
+
+      # テンポラリファイルを解析場所に配置する
+      unless(move $tmp_path, $ana_path){
+         # テンポラリファイルを解析場所に配置できないなら、
+         # テンポラリファイルを削除してエラーを返す。
+         cleanup($tmp_path);
+         return [ 500, [ 'Content-Type' => 'text/plain' ], [ "Failed move $tmp_path to $ana_path : $!" ], ];
+      }
+
+      # 解析場所に配置したファイルを実行可能な権限に変更する
+      unless(chmod 0444, $ana_path){
+         # 権限変更ができないなら解析場所に配置したファイルを削除して、エラーを返す
+         cleanup($ana_path);
+         return [ 500, [ 'Content-Type' => 'text/plain' ], [ "Failed chmod $ana_path : $!" ], ];
+      }
+
+      # クライアントから渡されたmd5値とサーバ上で取得したmd5値が一致するのかを確認する。      
+      unless($clinet_md5 eq get_md5($ana_path)){
+         # md5が一致しないならファイルのアップロード時に壊れているのでファイルを削除してエラーを返す
+         cleanup($ana_path);
+         return [ 500, [ 'Content-Type' => 'text/plain' ], [ "upload file is corrupted." ], ];
+      }      
+
+      #------------------#
+      # TRACELOG取得処理 # 
+      #------------------#
+
+      my $tracelog_file;
+
+      # tracelog取得処理は未知数のエラーが発生する可能性が高いのでトラップする
       eval{
-         # 解析対象ファイルを解析場所に配置してファイルパスを取得
-         $ana_path = decide_file_location($file_path, $file_name);
-         # MD5を取得
-         $server_md5 = get_md5($ana_path);
-         # tracelogの取得
-         $tracelog = get_tracelog($file_name);
+         # ブラウザの作成
+         my $ua = LWP::UserAgent->new;
+         $ua->agent("OPWD CLIENT ;-)");
+         $ua->timeout($YAML->{SANDBOX_UA_TIMEOUT});
+   
+         # 解析対象ファイルを実行できるURIを構築する
+         my $ana_uri = "http://".$YAML->{PHP_BUILD_SERVER_HOST}.":".$YAML->{PHP_BUILD_SERVER_PORT}."/".$file_name;
+   
+         # tracelogファイルパスを取得する
+         $tracelog_file = "$YAML->{TRACELOG_DIR}".$file_name.".xt";
+   
+         # 解析PHPをApache経由で実行し、Xdebugにtracelogを吐かせる
+         my $response = $ua->get("$ana_uri");
+   
+         unless($response->is_success){
+            # TRACELOG取得用のリクエストが失敗したなら、ファイルとtracelogを削除してエラーを返す。
+            cleanup($ana_path);
+            cleanup($tracelog_file);
+            my $code = $response->code;
+            my $content = $response->content;
+            return [ 500, [ 'Content-Type' => 'text/plain' ], [ "SANDBOX browser error [$code] $content" ], ];
+         }      
       };
 
-      # MD5エラー 
-      if($client_md5 ne $server_md5){
-         cleanup($ana_path);
-         cleanup($tracelog);
-         return [ 500, [ 'Content-Type' => 'text/plain' ], [ "upload file is corrupted." ], ];
-      }
-
-      # 例外のハンドリング 
       if($@){
          cleanup($ana_path);
-         cleanup($tracelog);
-         return [ 500, [ 'Content-Type' => 'text/plain' ], [ $@ ], ];
+         cleanup($tracelog_file);
+         return [ 500, [ 'Content-Type' => 'text/plain' ], [ "SANDBOX browser eval trap : $@" ], ];
       }
 
-      # tracelogの解析 
-      # $func_infoは関数名と出現回数を記録したハッシュリファレンス
-      my ($func_info,$stack_trace) = parse_tracelog($tracelog);
-      # tracelogの生テキスト
-      my $trace_text = read_file($tracelog);
+      #------------------#
+      # TRACELOG解析処理 #
+      #------------------#
 
+      # $func_infoは関数名と出現回数を記録したハッシュリファレンス
+      my ($func_info,$stack_trace) = parse_tracelog($tracelog_file);
+      # tracelogの生テキスト
+      my $trace_text = read_file($tracelog_file);
+
+      # TRACELOGを取得したら解析対象ファイルやTRACELOGファイルは必要ないので削除する
       cleanup($ana_path);
-      cleanup($tracelog);
+      cleanup($tracelog_file);
 
       my %ret;
       if($mode eq 'viewfunc'){

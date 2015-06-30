@@ -6,7 +6,22 @@ use Digest::MD5;
 use K0U5UK3::Error qw(debug warning critical);
 
 @ISA = qw(Exporter);
-@EXPORT_OK = qw(get_md5 concat_path init_dir);
+@EXPORT_OK = qw(read_file cleanup get_md5 concat_path init_dir);
+
+sub read_file($){
+   my $file = shift;
+   my $text;
+   open my $fh, '<', $file or die "Failed read $file : $!\n";
+   local $/ = undef;
+   $text = <$fh>;
+   close($fh);
+   return $text;
+}
+
+sub cleanup($){
+   my $file = shift;
+   unlink($file) or critical "Failed unlink $file : $!\n" if -f $file;
+}
 
 sub get_md5($){
    my $filename = shift;
