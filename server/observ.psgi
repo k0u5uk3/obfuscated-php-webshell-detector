@@ -17,8 +17,6 @@ use K0U5UK3::Error qw($DEBUG $WARNING debug warning critical);
 use K0U5UK3::Util qw(get_md5);
 use K0U5UK3::OPWD qw();
 
-our $VERSION = "0.0.2";
-our $THRESHOLD = 50;
 our $YAML = YAML::LoadFile("$Bin/../settings.yaml");
 
 #------------#
@@ -48,7 +46,7 @@ sub get_tracelog($){
 
    # ブラウザの作成
    my $ua = LWP::UserAgent->new;
-   $ua->agent("Obfusucation Detection Browser $VERSION");
+   $ua->agent("OPWD CLIENT");
    # 解析PHPをApache経由で実行し、Xdebugにtracelogを吐かせる
    my $response = $ua->get("http://$YAML->{PHP_BUILD_SERVER_HOST}:$YAML->{PHP_BUILD_SERVER_PORT}/$file_name");
    die "Failed execute http://$YAML->{PHP_BUILD_SERVER_HOST}:$YAML->{PHP_BUILD_SERVER_PORT}/$file_name" unless $response->is_success;
@@ -95,52 +93,47 @@ sub parse_tracelog($){
    return (\%func_count, \@stack_trace);
 }
 
-sub detect($){
+sub detect_obfuscate($){
    my $info = shift;
-   my $score = 0;
    my @msg;
    
+   # このフラグが両方立った時、難読化ファイルとして判定する
+   # これは復号処理のための関数と、
+   # 再評価のための関数が難読化ファイルの実行のために必要であるため
+   my ($eval_flag, $deobfuscate_flag);
+
    # コード再評価のための関数
-   # この関数を使用する毎に+50p
-   my @eval_func = qw(
-      eval
-      assert
-      create_function
-   );
+   # preg_replaceのeオプションは内部でevalとして処理されるので含めない
+   my @eval_func = qw(eval assert create_function);
 
-   # コード難読化のための関数
-   # この関数を使用する毎に+10p
-   my @obfuscate_func = qw(
-      base64_encode
-      gzdeflate
-      str_rot13
-      gzcompress
-      strrev
-      rawurlencode
-   );
+   # コード復号化のための関数
+   my @deobfuscate_func = qw(base64_decode gzinflate str_rot13 
+                             gzuncompress strrev rawurldecode);
 
-   # コード再評価関数の使用に基づきスコアリング
    map{ 
       my $key = $_;
       if(grep { $key eq $_ } @eval_func){
-         my $point = 50 * $info->{$key};
-         push(@msg, "$key($point)");
-         $score += $point;
+         my $count = $info->{$key};
+         push(@msg, "$key($count)");
+         $eval_flag++;
       }
    } keys %$info;
 
    # コード再評価関数の使用に基づきスコアリング
    map{ 
       my $key = $_;
-      if(grep { $key eq $_ } @obfuscate_func){
-         my $point = 10 * $info->{$key};
-         push(@msg, "$key($point)");
-         $score += $point;
+      if(grep { $key eq $_ } @deobfuscate_func){
+         my $count = $info->{$key};
+         push(@msg, "$key($count)");
+         $deobfuscate_flag++;
       }
    } keys %$info;
 
-   return ($score, \@msg);
-
+   if($eval_flag && $deobfuscate_flag){
+      return (1, \@msg);
+   }else{
+      return (0, \@msg);
+   }
 }
 
 sub read_file($){
@@ -234,11 +227,10 @@ sub main(){
       my $file_name = $uploads->{data}->{filename};    # 対象ファイル名
       my $file_path = $uploads->{data}->{tempname};    # 対象ファイルの一時保存先
       my $client_md5 = $req->parameters->{md5};        # 対象ファイルのCLIENT側で取得したmd5
-      my $mode = $req->parameters->{mode};
+      my $mode = $req->parameters->{mode};             # mode
 
       # mode値のチェック
       my @allow_mode = qw(detect-obfuscate detect-webshell deobfuscate tracelog viewfunc);
-
       unless(grep {$mode eq $_} @allow_mode){
          return [ 500, [ 'Content-Type' => 'text/plain' ], [ "unexcepted mode paramaeter" ], ];
       }
@@ -298,23 +290,25 @@ sub main(){
       }     
 
       if($mode eq 'detect-obfuscate'){
-         my ($score, $msg) =  detect($func_info); 
-         if($score >= $THRESHOLD){
+         my ($flag, $msg) =  detect_obfuscate($func_info); 
+         if($flag){
             # 難読化判定
             %ret = (
                   'mode' => 'detect-obfuscate',
-                  'body' => "Detect!!($score) : " . join(", ", @$msg),
+                  'body' => "Obfusucate File : " . join(", ", @$msg),
                   );
          }else{
             # 難読化されていない
             %ret = (
                   'mode' => 'detect-obfuscate',
-                  'body' => "None($score) : " . join(", ", @$msg),
+                  'body' => "Not Obfusucate File: " . join(", ", @$msg),
                   );
          }
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }
 
+#debug
+my $THRESHOLD=100;
       if($mode eq 'detect-webshell'){
          my ($score, $obmsg) =  detect($func_info); 
          if($score >= $THRESHOLD){
