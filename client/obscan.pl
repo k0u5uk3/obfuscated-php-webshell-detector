@@ -2,13 +2,15 @@
 use strict;
 use warnings;
 use YAML;
-use Digest::MD5;
 use HTTP::Request::Common;
 use LWP::UserAgent;
 use Getopt::Long qw(:config posix_default no_ignore_case gnu_compat);
 use File::Spec;
 use JSON qw(encode_json decode_json);
 use FindBin qw($Bin);
+use lib "$Bin/../lib";
+use K0U5UK3::Error qw($DEBUG $WARNING debug warning critical);
+use K0U5UK3::Util qw(get_md5);
 use Data::Dumper;
 
 our $YAML = YAML::LoadFile("$Bin/../settings.yaml");
@@ -19,14 +21,6 @@ our $YAML = YAML::LoadFile("$Bin/../settings.yaml");
 sub usage{
    printf("Usage : %s -f filename -m detect-obfuscate|detect-webshell|deobfuscate|tracelog|viewfunc\n", $0); 
    exit(0);
-}
-
-sub get_md5($){
-   my $filename = shift;
-   open my $fh, '<', $filename or die "Failed open $filename : $!\n";
-   my $md5 = Digest::MD5->new->addfile($fh)->hexdigest;
-   close($fh);
-   return $md5;
 }
 
 #-------------#
@@ -85,7 +79,7 @@ my $response = $ua->request( $request );
 # ERROR処理
 unless($response->is_success){
    my $code = $response->code;
-   die "$abs_filename: [$code] ".$response->content."\n";
+   critical "$abs_filename: [$code] ".$response->content;
 }
 
 # 以降はSANDBOXから正常なレスポンスを受け取ったとみなす。

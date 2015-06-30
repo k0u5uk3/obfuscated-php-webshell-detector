@@ -12,6 +12,10 @@ use Data::Dumper;
 use JSON qw(encode_json decode_json);
 use File::Temp qw/ tempfile tempdir /; 
 use FindBin qw($Bin);
+use lib "$Bin/../lib";
+use K0U5UK3::Error qw($DEBUG $WARNING debug warning critical);
+use K0U5UK3::Util qw(get_md5);
+use K0U5UK3::OPWD qw();
 
 our $VERSION = "0.0.2";
 our $THRESHOLD = 50;
@@ -31,20 +35,12 @@ sub decide_file_location($$){
    }
 
    # 対象ファイルの解析場所に移す
-   move $file_path, $ana_path or die "Faild move $file_path to $ana_path : $!\n";
+   move $file_path, $ana_path or critical "Faild move $file_path to $ana_path : $!\n";
 
    # 解析場所に移したphpファイルを実行可能にする
-   chmod 0444, $ana_path or die "Failed change permission $ana_path\n";
+   chmod 0444, $ana_path or critical "Failed change permission $ana_path\n";
 
    return $ana_path;
-}
-
-sub get_md5($){
-   my $filename = shift;
-   open my $fh, '<', $filename or die "Failed open $filename : $!\n";
-   my $md5 = Digest::MD5->new->addfile($fh)->hexdigest;
-   close($fh);
-   return $md5;
 }
 
 sub get_tracelog($){
