@@ -63,28 +63,38 @@ sub get_md5($){
 #-------------#
 
 my $target_file = $opts{filename};
+my $abs_filename = File::Spec->rel2abs("$opts{filename}");
 my $target_md5  = get_md5($target_file);
-my $analyze_url = "http://192.168.74.57:9999";
+my $sandbox_uri;
 
-my $req = POST(
-   $analyze_url,
+# ブラウザの作成
+my $ua = LWP::UserAgent->new;
+$ua->timeout(5);
+
+# SSLを使用するか、しないかでURIを切り分ける。
+if($YAML->{USE_SSL}){
+   $sandbox_uri = "https://".$YAML->{SANDBOX_HOST}.":".$YAML->{SANDBOX_PORT};
+   $ua->ssl_opts( verify_hostname => 0 );
+}else{
+   $sandbox_uri = "http://".$YAML->{SANDBOX_HOST}.":".$YAML->{SANDBOX_PORT};
+}
+
+# POSTリクエストを作成する
+my $request = POST(
+   $sandbox_uri,
    Content_Type => 'form-data',
    Content => {
-      md5  => "$target_md5",
+      md5  => get_md5($target_file),
       mode => "$opts{mode}",
       data => [ $target_file ],
    },
 );
 
-my $abs_filename = File::Spec->rel2abs("$opts{filename}");
+# POSTリクエストを作成し、レスポンスを得る。
+my $response = $ua->request( $request );
 
-my $ua = LWP::UserAgent->new;
-#$ua->ssl_opts( verify_hostname => 0 );
-$ua->timeout(5);
-my $res = $ua->request( $req );
-
-if($res->is_success){
-   my $result = decode_json($res->content);
+if($response->is_success){
+   my $result = decode_json($response->content);
    # debug mode output 
    if($result->{mode} eq 'viewfunc'){
       print "TARGET FILE [ $abs_filename ]\n";
@@ -120,6 +130,6 @@ if($res->is_success){
    }
 }else{
    print "$abs_filename:";
-   print $res->content;
+   print $response->content;
    die;
 }

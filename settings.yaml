@@ -1,7 +1,9 @@
 #------------------#
 # GENERAL SETTINGS #
 #------------------#
-
+SANDBOX_HOST: 157.7.190.188
+SANDBOX_PORT: 9999
+USE_SSL: 0
 
 #------------------#
 # SANDBOX SETTINGS #
