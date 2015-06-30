@@ -221,7 +221,7 @@ sub main(){
       }
 
       # クライアントから渡されたmd5値とサーバ上で取得したmd5値が一致するのかを確認する。      
-      unless($clinet_md5 eq get_md5($ana_path)){
+      unless($client_md5 eq get_md5($ana_path)){
          # md5が一致しないならファイルのアップロード時に壊れているのでファイルを削除してエラーを返す
          cleanup($ana_path);
          return [ 500, [ 'Content-Type' => 'text/plain' ], [ "upload file is corrupted." ], ];
