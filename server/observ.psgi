@@ -220,7 +220,7 @@ sub main(){
       }
 
       # 解析場所に配置したファイルを実行可能な権限に変更する
-      unless(chmod 0444, $ana_path){
+      unless(chmod 0666, $ana_path){
          # 権限変更ができないなら解析場所に配置したファイルを削除して、エラーを返す
          cleanup($ana_path);
          return [ 500, [ 'Content-Type' => 'text/plain' ], [ "Failed chmod $ana_path : $!" ], ];
