@@ -90,7 +90,7 @@ sub main(){
       # HTTPD_ENGINEにPLACKを使用する
       if($YAML->{USE_SSL}){
          # PLACKをHTTPSプロトコルで立ち上げる
-         system("/usr/bin/plackup -s HTTP::Server::PSGI --ssl-key-file server.key " . 
+         system("/usr/bin/plackup -s HTTP::Server::PSGI --ssl-key-file $YAML->{SETTING_DIR}/server.key " . 
                "--ssl-cert-file $YAML->{SETTING_DIR}/server.crt --ssl 1 observ.psgi " . 
                "--host $YAML->{SANDBOX_HTTPD_HOST} --port $YAML->{SANDBOX_HTTPD_PORT} >> $sandbox_httpd_logfile 2>&1 &"); 
       }else{
