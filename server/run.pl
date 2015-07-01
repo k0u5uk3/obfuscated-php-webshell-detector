@@ -54,7 +54,7 @@ sub main(){
    init_dir($YAML->{LOG_DIR});
 
    my $sandbox_httpd_logfile = concat_path($YAML->{LOG_DIR}, $YAML->{SANDBOX_HTTPD_LOGFILE});
-   my $buitin_php_server_logfile = concat_path($YAML->{LOG_DIR}, $YAML->{PHP_BUILTIN_SERVER_LOG});
+   my $buitin_php_server_logfile = concat_path($YAML->{LOG_DIR}, $YAML->{PHP_BUILTIN_SERVER_LOGFILE});
 
    # Templateからphp実行前処理と実行後処理を作成
    my $prepend_php = generate_from_template("./template/prepend.php", {TRACELOG_DIR => "$YAML->{TRACELOG_DIR}"});
