@@ -10,9 +10,9 @@
 -A INPUT -p icmp -j ACCEPT
 -A INPUT -i lo -j ACCEPT
 -A INPUT -m state --state NEW -m tcp -p tcp --dport 22 -j ACCEPT
--A INPUT -m state --state NEW -m tcp -p tcp --dport {$PLACK_SERVER_PORT} -j ACCEPT
+-A INPUT -m state --state NEW -m tcp -p tcp --dport {$SANDBOX_HTTPD_PORT} -j ACCEPT
 
 -A OUTPUT -p tcp -m state --state ESTABLISHED --sport 22 -j ACCEPT
--A OUTPUT -p tcp -m state --state ESTABLISHED --sport {$PLACK_SERVER_PORT} -j ACCEPT
+-A OUTPUT -p tcp -m state --state ESTABLISHED --sport {$SANDBOX_HTTPD_PORT} -j ACCEPT
 
 COMMIT

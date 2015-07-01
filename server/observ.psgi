@@ -209,7 +209,7 @@ sub main(){
       }
       
       # クライアントから渡されたファイル名を元に解析場所に配置した完全なファイルパスを取得する       
-      my $ana_path = $YAML->{WEBROOT} . $file_name;
+      my $ana_path = $YAML->{WEBROOT_DIR} . $file_name;
 
       # テンポラリファイルを解析場所に配置する
       unless(move $tmp_path, $ana_path){
@@ -247,7 +247,7 @@ sub main(){
          $ua->timeout($YAML->{SANDBOX_UA_TIMEOUT});
    
          # 解析対象ファイルを実行できるURIを構築する
-         my $ana_uri = "http://".$YAML->{PHP_BUILD_SERVER_HOST}.":".$YAML->{PHP_BUILD_SERVER_PORT}."/".$file_name;
+         my $ana_uri = "http://".$YAML->{PHP_BUILTIN_SERVER_HOST}.":".$YAML->{PHP_BUILTIN_SERVER_PORT}."/".$file_name;
    
          # tracelogファイルパスを取得する
          $tracelog_file = "$YAML->{TRACELOG_DIR}".$file_name.".xt";
