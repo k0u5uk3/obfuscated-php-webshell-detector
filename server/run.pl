@@ -97,9 +97,11 @@ sub main(){
       }
     }
 
-	# plackとphp builid in serverの起動
-	system("/usr/bin/php -t $YAML->{WEBROOT_DIR} -S $YAML->{PHP_BUILTIN_SERVER_HOST}:$YAML->{PHP_BUILTIN_SERVER_PORT} " . 
-           "-c ./custom-php.ini >> $YAML->{PHP_BUILTIN_SERVER_LOG} 2>&1 &");
+    if($YAML->{SANDBOX_HTTPD_ENGINE} ne 'APACHE'){
+       # APACHE以外のHTTPD_ENGINEを使用するならPHP_BUILTIN_SERVERが必要
+      	system("/usr/bin/php -t $YAML->{WEBROOT_DIR} -S $YAML->{PHP_BUILTIN_SERVER_HOST}:$YAML->{PHP_BUILTIN_SERVER_PORT} " . 
+               "-c ./custom-php.ini >> $YAML->{PHP_BUILTIN_SERVER_LOG} 2>&1 &");
+    }
 }
 
 main ();
