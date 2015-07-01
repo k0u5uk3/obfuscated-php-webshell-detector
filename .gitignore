@@ -1,2 +1,2 @@
-./server/logs/*
-./tags
+server/logs/*
+tags
