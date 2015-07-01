@@ -8,6 +8,7 @@ use File::Basename qw/basename/;
 use File::Path 'mkpath';
 use Cwd 'getcwd';
 use FindBin qw($Bin);
+use lib "$Bin/../lib";
 use K0U5UK3::Error qw($DEBUG $WARNING debug warning critical);
 use K0U5UK3::Util qw(init_dir);
 
