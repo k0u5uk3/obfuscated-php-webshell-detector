@@ -6,11 +6,12 @@ use YAML;
 use Text::Template;
 use File::Basename qw/basename/;
 use File::Path 'mkpath';
+use File::Spec::Functions;
 use Cwd 'getcwd';
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use K0U5UK3::Error qw($DEBUG $WARNING debug warning critical);
-use K0U5UK3::Util qw(concat_path init_dir);
+use K0U5UK3::Util qw(init_dir);
 
 our $YAML = YAML::LoadFile("$Bin/../settings.yaml");
 
@@ -30,7 +31,7 @@ sub generate_from_template($$){
    my $text = $template->fill_in(HASH => $data) or die "Faild fill in $tmpl_file\n";
    my $gen_file = basename $tmpl_file;
 
-   my $write_file = concat_path($YAML->{SETTING_DIR}, $gen_file);
+   my $write_file = catfile($YAML->{SETTING_DIR}, $gen_file);
 
    open my $fh, '>', $write_file or die "Faild write $write_file : $!\n";
    print $fh $text;
@@ -53,8 +54,8 @@ sub main(){
    # ログ格納ディレクトリを作成する
    init_dir($YAML->{LOG_DIR});
 
-   my $sandbox_httpd_logfile = concat_path($YAML->{LOG_DIR}, $YAML->{SANDBOX_HTTPD_LOGFILE});
-   my $buitin_php_server_logfile = concat_path($YAML->{LOG_DIR}, $YAML->{PHP_BUILTIN_SERVER_LOGFILE});
+   my $sandbox_httpd_logfile = catfile($YAML->{LOG_DIR}, $YAML->{SANDBOX_HTTPD_LOGFILE});
+   my $buitin_php_server_logfile = catfile($YAML->{LOG_DIR}, $YAML->{PHP_BUILTIN_SERVER_LOGFILE});
 
    # Templateからphp実行前処理と実行後処理を作成
    my $prepend_php = generate_from_template("./template/prepend.php", {TRACELOG_DIR => "$YAML->{TRACELOG_DIR}"});
