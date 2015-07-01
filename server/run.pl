@@ -36,7 +36,7 @@ sub generate_from_template($$){
    print $fh $text;
    close($fh);
 
-   msg("$tmp_file template file to $write_file");
+   msg("$tmpl_file template file to $write_file");
    return $write_file;
 }
 
