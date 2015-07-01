@@ -254,15 +254,6 @@ sub main(){
    
          # 解析PHPをApache経由で実行し、Xdebugにtracelogを吐かせる
          my $response = $ua->get("$ana_uri");
-   
-         unless($response->is_success){
-            # TRACELOG取得用のリクエストが失敗したなら、ファイルとtracelogを削除してエラーを返す。
-            cleanup($ana_path);
-            cleanup($tracelog_file);
-            my $code = $response->code;
-            my $content = $response->content;
-            return [ 500, [ 'Content-Type' => 'text/plain' ], [ "SANDBOX browser error [$code] $content" ], ];
-         }      
       };
 
       if($@){
