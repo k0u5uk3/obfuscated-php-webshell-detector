@@ -61,7 +61,7 @@ sub main(){
    my $append_php = generate_from_template("./template/append.php", {});
 
    # Templateからphp.iniを作成
-   my $custom_php = generate_from_template("./template/custom-php.ini", {SETTING_DIR => "$YAML->{SETTING_DIR}"});
+   my $custom_php = generate_from_template("./template/custom-php.ini", {PREPEND_PHP => "$prepend_php", APPEND_PHP => "$append_php"});
 
    # Templateからiptables.ruleを作成
    my $iptables_rule = generate_from_template("./template/iptables.rule", { SANDBOX_HTTPD_PORT  => "$YAML->{SANDBOX_HTTPD_PORT}" });
