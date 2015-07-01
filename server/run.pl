@@ -91,23 +91,23 @@ sub main(){
       if($YAML->{USE_SSL}){
          # PLACKをHTTPSプロトコルで立ち上げる
          system("/usr/bin/plackup -s HTTP::Server::PSGI --ssl-key-file $YAML->{SETTING_DIR}/server.key " . 
-               "--ssl-cert-file $YAML->{SETTING_DIR}/server.crt --ssl 1 observ.psgi " . 
+               "--ssl-cert-file $YAML->{SETTING_DIR}/server.crt --ssl 1 sandbox.psgi " . 
                "--host $YAML->{SANDBOX_HTTPD_HOST} --port $YAML->{SANDBOX_HTTPD_PORT} >> $sandbox_httpd_logfile 2>&1 &"); 
       }else{
          # PLACKをHTTPプロトコルで立ち上げる
-         system("/usr/bin/plackup observ.psgi --host $YAML->{SANDBOX_HTTPD_HOST} " . 
+         system("/usr/bin/plackup sandbox.psgi --host $YAML->{SANDBOX_HTTPD_HOST} " . 
                "--port $YAML->{SANDBOX_HTTPD_PORT} >> $sandbox_httpd_logfile 2>&1 &");
       }
    }elsif($YAML->{SANDBOX_HTTPD_ENGINE} eq 'STARMAN'){
       # HTTPD_ENGINEにSTARMANを使用する
       if($YAML->{USE_SSL}){
          # STARMANをHTTPSプロトコルで立ち上げる
-         system("/usr/bin/plackup -s Starman -a observ.psgi --ssl-key-file $YAML->{SETTING_DIR}/server.key " . 
+         system("/usr/bin/plackup -s Starman -a sandbox.psgi --ssl-key-file $YAML->{SETTING_DIR}/server.key " . 
                "--ssl-cert-file $YAML->{SETTING_DIR}/server.crt --ssl 1 " . 
                "--host $YAML->{SANDBOX_HTTPD_HOST} --port $YAML->{SANDBOX_HTTPD_PORT} >> $sandbox_httpd_logfile 2>&1 &");
       }else{
          # STARMANをHTTPプロトコルで立ち上げる
-         system("/usr/bin/plackup -s Starman -a observ.psgi " . 
+         system("/usr/bin/plackup -s Starman -a sandbox.psgi " . 
                "--host $YAML->{SANDBOX_HTTPD_HOST} --port $YAML->{SANDBOX_HTTPD_PORT} >> $sandbox_httpd_logfile 2>&1 &");
       }
    }
