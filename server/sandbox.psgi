@@ -247,7 +247,12 @@ sub main(){
          $ua->timeout($YAML->{SANDBOX_UA_TIMEOUT});
    
          # 解析対象ファイルを実行できるURIを構築する
-         my $ana_uri = "http://".$YAML->{PHP_BUILTIN_SERVER_HOST}.":".$YAML->{PHP_BUILTIN_SERVER_PORT}."/".$file_name;
+         my $ana_uri;
+         if($YAML->{SANDBOX_HTTPD_ENGINE} eq 'APACHE'){
+            $ana_uri = "http://"127.0.0.1":".$YAML->{SANDBOX_HTTPD_PORT}."/sandbox/".$file_name;
+         }else{
+            $ana_uri = "http://".$YAML->{PHP_BUILTIN_SERVER_HOST}.":".$YAML->{PHP_BUILTIN_SERVER_PORT}."/".$file_name;
+         } 
    
          # tracelogファイルパスを取得する
          $tracelog_file = "$YAML->{TRACELOG_DIR}".$file_name.".xt";
