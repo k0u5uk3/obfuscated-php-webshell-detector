@@ -185,11 +185,12 @@ sub main(){
    my $app = sub {
       # obscan.plからのパラメータ取得
       my $req = Plack::Request->new(shift);
+
       my $uploads = $req->uploads;
       my $file_name = $uploads->{data}->{filename};    # 対象ファイル名
       my $tmp_path = $uploads->{data}->{tempname};    # 対象ファイルの一時保存先
-      my $client_md5 = $req->parameters->{md5};        # 対象ファイルのCLIENT側で取得したmd5
-      my $mode = $req->parameters->{mode};             # mode
+      my $client_md5 = $req->param('md5');        # 対象ファイルのCLIENT側で取得したmd5
+      my $mode = $req->param('mode');             # mode
 
       # mode値のチェック
       my @allow_mode = qw(detect-obfuscate detect-webshell deobfuscate tracelog viewfunc);
@@ -247,7 +248,12 @@ sub main(){
          $ua->timeout($YAML->{SANDBOX_UA_TIMEOUT});
    
          # 解析対象ファイルを実行できるURIを構築する
-         my $ana_uri = "http://".$YAML->{PHP_BUILTIN_SERVER_HOST}.":".$YAML->{PHP_BUILTIN_SERVER_PORT}."/".$file_name;
+         my $ana_uri;
+         if($YAML->{SANDBOX_HTTPD_ENGINE} eq 'APACHE'){
+            $ana_uri = "http://127.0.0.1:".$YAML->{SANDBOX_HTTPD_PORT}."/".$file_name;
+         }else{
+            $ana_uri = "http://".$YAML->{PHP_BUILTIN_SERVER_HOST}.":".$YAML->{PHP_BUILTIN_SERVER_PORT}."/".$file_name;
+         } 
    
          # tracelogファイルパスを取得する
          $tracelog_file = "$YAML->{TRACELOG_DIR}".$file_name.".xt";
@@ -319,16 +325,17 @@ sub main(){
          unless($obfuscate_flag){
             # 難読化されていないファイル
             %ret = ( 'mode' => 'detect-obfuscate', 'body' => "Not Obfusucate : " . join(", ", @$obfuscate_msg),);
+            return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
          }
 
          # 以降難読化されているファイルであるためwebshellか否かの判定を行う
          my ($webshell_flag, $webshell_msg) = detect_webshell(deobfusucate($stack_trace));
          unless($webshell_flag){
             # 難読化されているがwebshellではない
-            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "Obfusucate Not Webshell: " . join(", ", @$obfuscate_msg, @$webshell_msg),);
+            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "Not Obfuscated Webshell: " . join(", ", @$obfuscate_msg, @$webshell_msg),);
          }else{
             # 難読化されているWebShellである
-            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "Obfusucate Webshell: " . join(", ", @$obfuscate_msg, @$webshell_msg),);
+            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "Obfuscated Webshell: " . join(", ", @$obfuscate_msg, @$webshell_msg),);
          }
 
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
