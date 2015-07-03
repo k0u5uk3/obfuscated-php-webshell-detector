@@ -55,7 +55,7 @@ my $ua = LWP::UserAgent->new;
 $ua->timeout(5);
 
 # HTTP_ENGINEとSSL状況によりsandbox_uriを切り替える
-if($YAML->{ANDBOX_HTTPD_ENGINE} eq 'APACHE'){
+if($YAML->{SANDBOX_HTTPD_ENGINE} eq 'APACHE'){
    if($YAML->{USE_SSL}){
       $sandbox_uri = "https://".$YAML->{SANDBOX_HOST}.":".$YAML->{SANDBOX_PORT}."/sandbox/";
       $ua->ssl_opts( verify_hostname => 0 );
