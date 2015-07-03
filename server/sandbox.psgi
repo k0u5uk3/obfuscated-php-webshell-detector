@@ -250,7 +250,7 @@ sub main(){
          # 解析対象ファイルを実行できるURIを構築する
          my $ana_uri;
          if($YAML->{SANDBOX_HTTPD_ENGINE} eq 'APACHE'){
-            $ana_uri = "http://127.0.0.1:".$YAML->{SANDBOX_HTTPD_PORT}."/sandbox/".$file_name;
+            $ana_uri = "http://127.0.0.1:".$YAML->{SANDBOX_HTTPD_PORT}."/".$file_name;
          }else{
             $ana_uri = "http://".$YAML->{PHP_BUILTIN_SERVER_HOST}.":".$YAML->{PHP_BUILTIN_SERVER_PORT}."/".$file_name;
          } 
