@@ -325,16 +325,17 @@ sub main(){
          unless($obfuscate_flag){
             # 難読化されていないファイル
             %ret = ( 'mode' => 'detect-obfuscate', 'body' => "Not Obfusucate : " . join(", ", @$obfuscate_msg),);
+            return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
          }
 
          # 以降難読化されているファイルであるためwebshellか否かの判定を行う
          my ($webshell_flag, $webshell_msg) = detect_webshell(deobfusucate($stack_trace));
          unless($webshell_flag){
             # 難読化されているがwebshellではない
-            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "Obfusucate Not Webshell: " . join(", ", @$obfuscate_msg, @$webshell_msg),);
+            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "Not Obfuscated Webshell: " . join(", ", @$obfuscate_msg, @$webshell_msg),);
          }else{
             # 難読化されているWebShellである
-            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "Obfusucate Webshell: " . join(", ", @$obfuscate_msg, @$webshell_msg),);
+            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "Obfuscated Webshell: " . join(", ", @$obfuscate_msg, @$webshell_msg),);
          }
 
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
