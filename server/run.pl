@@ -95,7 +95,7 @@ sub main(){
          APACHE_ERR_LOGFILE => catfile($YAML->{LOG_DIR}, $YAML->{SANDBOX_HTTPD_ERRFILE}),
          APACHE_PORT => $YAML->{SANDBOX_HTTPD_PORT},
          APACHE_DOCUMENT_ROOT => $YAML->{WEBROOT_DIR},
-         APACHE_ACCESS_LOGFILE => catfile($YAML->{LOG_DIR}, $YAML->{SANDBOX_HTTPD_FILE}),
+         APACHE_ACCESS_LOGFILE => catfile($YAML->{LOG_DIR}, $YAML->{SANDBOX_HTTPD_LOGFILE}),
          SANDBOX_PSGI => catfile(getcwd(), "sandbox.psgi"),
          PHP_INI_FILE => $custom_php,
       });
