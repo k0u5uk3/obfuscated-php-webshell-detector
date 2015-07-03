@@ -86,8 +86,24 @@ sub main(){
    } 
 
    if($YAML->{SANDBOX_HTTPD_ENGINE} eq 'APACHE'){
-      
+      # Apacheの設定ディレクトリを作成する
+      init_dir($YAML->{APACHE_DIR});
+      my $apache_conf = generate_from_template("$YAML->{APACHE_DIR}/apache2.conf", {
+         APACHE_DIR => $YAML->{APACHE_DIR},
+         APACHE_USER => scalar getpwuid($>),
+         APACHE_GROUP => scalar getgrgid($)),
+         APACHE_ERR_LOGFILE => catfile($YAML->{LOG_DIR}, $YAML->{SANDBOX_HTTPD_ERRFILE}),
+         APACHE_PORT => $YAML->{SANDBOX_HTTPD_PORT},
+         APACHE_DOCUMENT_ROOT => $YAML->{WEBROOT_DIR},
+         PACHE_ACCESS_LOGFILE => catfile($YAML->{LOG_DIR}, $YAML->{SANDBOX_HTTPD_FILE}),
+         SANDBOX_PSGI => catfile(getcwd(), "sandbox.psgi"),
+         PHP_INI_FILE => $custom_php,
+      });
 
+      # 必要な設定ファイルをコピーする 
+      system("cp -r /etc/apache2/{mods-available,mods-enabled} $YAML->{APACHE_DIR}");
+      # Apacheを稼働させる
+      system("/usr/sbin/apache2 -d $YAML->{APACHE_DIR} -f apache2.conf");
    }elsif($YAML->{SANDBOX_HTTPD_ENGINE} eq 'PLACK'){
       # HTTPD_ENGINEにPLACKを使用する
       if($YAML->{USE_SSL}){

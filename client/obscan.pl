@@ -54,12 +54,21 @@ my $sandbox_uri;
 my $ua = LWP::UserAgent->new;
 $ua->timeout(5);
 
-# SSLを使用するか、しないかでURIを切り分ける。
-if($YAML->{USE_SSL}){
-   $sandbox_uri = "https://".$YAML->{SANDBOX_HOST}.":".$YAML->{SANDBOX_PORT};
-   $ua->ssl_opts( verify_hostname => 0 );
+# HTTP_ENGINEとSSL状況によりsandbox_uriを切り替える
+if($YAML->{ANDBOX_HTTPD_ENGINE} eq 'APACHE'){
+   if($YAML->{USE_SSL}){
+      $sandbox_uri = "https://".$YAML->{SANDBOX_HOST}.":".$YAML->{SANDBOX_PORT}."/sandbox/";
+      $ua->ssl_opts( verify_hostname => 0 );
+   }else{
+      $sandbox_uri = "http://".$YAML->{SANDBOX_HOST}.":".$YAML->{SANDBOX_PORT}."/sandbox/";
+   }
 }else{
-   $sandbox_uri = "http://".$YAML->{SANDBOX_HOST}.":".$YAML->{SANDBOX_PORT}."/sandbox/";
+   if($YAML->{USE_SSL}){
+      $sandbox_uri = "https://".$YAML->{SANDBOX_HOST}.":".$YAML->{SANDBOX_PORT};
+      $ua->ssl_opts( verify_hostname => 0 );
+   }else{
+      $sandbox_uri = "http://".$YAML->{SANDBOX_HOST}.":".$YAML->{SANDBOX_PORT};
+   }
 }
 
 # POSTリクエストを作成する
@@ -120,7 +129,5 @@ if($result->{mode} eq 'deobfuscate'){
 if($result->{mode} eq 'detect-webshell'){
    print "TARGET FILE [ $abs_filename ] : $result->{body}\n";
 }
-
-
 
 exit;
