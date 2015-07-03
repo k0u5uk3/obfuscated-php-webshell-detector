@@ -100,7 +100,7 @@ sub main(){
          PHP_INI_FILE => $custom_php,
       });
 
-      system("cp $apache_conf $YAML->{APACHE_DIR"); 
+      system("cp $apache_conf $YAML->{APACHE_DIR}"); 
 
       # 必要な設定ファイルをコピーする 
       system("cp -r /etc/apache2/mods-available $YAML->{APACHE_DIR}");
