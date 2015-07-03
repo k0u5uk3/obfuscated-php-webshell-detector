@@ -101,7 +101,8 @@ sub main(){
       });
 
       # 必要な設定ファイルをコピーする 
-      system("cp -r /etc/apache2/{mods-available,mods-enabled} $YAML->{APACHE_DIR}");
+      system("cp -r /etc/apache2/mods-available $YAML->{APACHE_DIR}");
+      system("cp -r /etc/apache2/mods-enabled $YAML->{APACHE_DIR}");
       # Apacheを稼働させる
       system("/usr/sbin/apache2 -d $YAML->{APACHE_DIR} -f apache2.conf");
    }elsif($YAML->{SANDBOX_HTTPD_ENGINE} eq 'PLACK'){
