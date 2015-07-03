@@ -185,11 +185,12 @@ sub main(){
    my $app = sub {
       # obscan.plからのパラメータ取得
       my $req = Plack::Request->new(shift);
+
       my $uploads = $req->uploads;
       my $file_name = $uploads->{data}->{filename};    # 対象ファイル名
       my $tmp_path = $uploads->{data}->{tempname};    # 対象ファイルの一時保存先
-      my $client_md5 = $req->parameters->{md5};        # 対象ファイルのCLIENT側で取得したmd5
-      my $mode = $req->parameters->{mode};             # mode
+      my $client_md5 = $req->param('md5');        # 対象ファイルのCLIENT側で取得したmd5
+      my $mode = $req->param('mode');             # mode
 
       # mode値のチェック
       my @allow_mode = qw(detect-obfuscate detect-webshell deobfuscate tracelog viewfunc);
