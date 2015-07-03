@@ -88,7 +88,7 @@ sub main(){
    if($YAML->{SANDBOX_HTTPD_ENGINE} eq 'APACHE'){
       # Apacheの設定ディレクトリを作成する
       init_dir($YAML->{APACHE_DIR});
-      my $apache_conf = generate_from_template("$YAML->{APACHE_DIR}/apache2.conf", {
+      my $apache_conf = generate_from_template("./template/apache2.conf", {
          APACHE_DIR => $YAML->{APACHE_DIR},
          APACHE_USER => scalar getpwuid($>),
          APACHE_GROUP => scalar getgrgid($)),
@@ -99,6 +99,8 @@ sub main(){
          SANDBOX_PSGI => catfile(getcwd(), "sandbox.psgi"),
          PHP_INI_FILE => $custom_php,
       });
+
+      system("cp $apache_conf $YAML->{APACHE_DIR"); 
 
       # 必要な設定ファイルをコピーする 
       system("cp -r /etc/apache2/mods-available $YAML->{APACHE_DIR}");
