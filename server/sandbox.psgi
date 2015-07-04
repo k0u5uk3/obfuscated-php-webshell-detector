@@ -158,9 +158,15 @@ sub detect_webshell($){
 
    # 以下の関数がひとつでも使用されているならwebshellとみなす
    # ここにはpreg_replaceを含めるべきではないか？
+   #my @webshell_codes = qw(
+   #   system exec passthru shell_exec popen proc_open 
+   #   pcntl_exec eval assert create_function
+   #);
+
+   # 検知関数をこれだけにすると誤検知はほぼなくなる。
+   # しかしweebvelyなどの外からwebshell_codeが渡ってくるものは検知できなくなる
    my @webshell_codes = qw(
-      system exec passthru shell_exec popen proc_open 
-      pcntl_exec eval assert create_function
+      system exec passthru shell_exec popen proc_open pcntl_exec    
    );
 
    foreach my $code (@$codes){
@@ -305,10 +311,10 @@ sub main(){
          my ($flag, $msg) =  detect_obfuscate($func_info); 
          if($flag){
             # 難読化判定
-            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "Obfusucate : " . join(", ", @$msg),);
+            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "OBFUSCATE[o] [" . join(", ", @$msg) ."]");
          }else{
             # 難読化されていない
-            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "Not Obfusucate : " . join(", ", @$msg),);
+            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "OBFUSCATE[x] [" . join(", ", @$msg) ."]");
          }
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }
@@ -324,7 +330,7 @@ sub main(){
          my ($obfuscate_flag, $obfuscate_msg) =  detect_obfuscate($func_info); 
          unless($obfuscate_flag){
             # 難読化されていないファイル
-            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "Not Obfusucate : " . join(", ", @$obfuscate_msg),);
+            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "OBFUSCATE[x] [" . join(", ", @$obfuscate_msg) ."]");
             return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
          }
 
@@ -332,10 +338,10 @@ sub main(){
          my ($webshell_flag, $webshell_msg) = detect_webshell(deobfusucate($stack_trace));
          unless($webshell_flag){
             # 難読化されているがwebshellではない
-            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "Not Obfuscated Webshell: " . join(", ", @$obfuscate_msg, @$webshell_msg),);
+            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "OBFUSCATE[o] WEBSHELL[x] [" . join(", ", @$obfuscate_msg, @$webshell_msg) ."]");
          }else{
             # 難読化されているWebShellである
-            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "Obfuscated Webshell: " . join(", ", @$obfuscate_msg, @$webshell_msg),);
+            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "OBFUSCATE[o] WEBSHELL[o] [" . join(", ", @$obfuscate_msg, @$webshell_msg) ."]");
          }
 
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
