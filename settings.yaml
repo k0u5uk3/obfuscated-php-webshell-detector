@@ -44,10 +44,10 @@ SANDBOX_HTTPD_LOGFILE: httpd.log
 SANDBOX_HTTPD_ERRFILE: httpd_err.log
 
 # SANDBOXが解析対象PHPスクリプトをHTTP上から実行する際のTIMEOUTを決定します。
-SANDBOX_UA_TIMEOUT: 30
+SANDBOX_UA_TIMEOUT: 60
 
 #-----------------#
 # CLINET SETTINGS #
 #-----------------#
 
-CLIENT_UA_TIMEOUT: 30
+CLIENT_UA_TIMEOUT: 60
