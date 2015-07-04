@@ -110,7 +110,7 @@ if($result->{mode} eq 'tracelog'){
 
 # [detect-obfuscate]は難読化されたファイルか否かを判定し、結果を返す
 if($result->{mode} eq 'detect-obfuscate'){
-   print "TARGET FILE [ $abs_filename ] : $result->{body}\n";
+   print "TARGET FILE [ $abs_filename ] $result->{body}\n";
 }
 
 # [deobfuscate]は再評価処理に渡された引数を全て返す
@@ -127,7 +127,7 @@ if($result->{mode} eq 'deobfuscate'){
 
 # [detect-webshell]は難読化されたwebshellか否かを判定し、結果を返す。
 if($result->{mode} eq 'detect-webshell'){
-   print "TARGET FILE [ $abs_filename ] : $result->{body}\n";
+   print "TARGET FILE [ $abs_filename ] $result->{body}\n";
 }
 
 exit;
