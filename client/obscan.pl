@@ -52,7 +52,7 @@ my $sandbox_uri;
 
 # ブラウザの作成
 my $ua = LWP::UserAgent->new;
-$ua->timeout(5);
+$ua->timeout($YAML->{CLIENT_UA_TIMEOUT});
 
 # HTTP_ENGINEとSSL状況によりsandbox_uriを切り替える
 if($YAML->{SANDBOX_HTTPD_ENGINE} eq 'APACHE'){
