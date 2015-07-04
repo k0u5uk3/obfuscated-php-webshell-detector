@@ -311,10 +311,10 @@ sub main(){
          my ($flag, $msg) =  detect_obfuscate($func_info); 
          if($flag){
             # 難読化判定
-            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "OBFUSCATE[o] [" . join(", ", @$msg) ."]");
+            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "OBFUSCATE[o] INFO[" . join(", ", @$msg) ."]");
          }else{
             # 難読化されていない
-            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "OBFUSCATE[x] [" . join(", ", @$msg) ."]");
+            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "OBFUSCATE[x] INFO[" . join(", ", @$msg) ."]");
          }
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
       }
@@ -330,7 +330,7 @@ sub main(){
          my ($obfuscate_flag, $obfuscate_msg) =  detect_obfuscate($func_info); 
          unless($obfuscate_flag){
             # 難読化されていないファイル
-            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "OBFUSCATE[x] [" . join(", ", @$obfuscate_msg) ."]");
+            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "OBFUSCATE[x] INFO[" . join(", ", @$obfuscate_msg) ."]");
             return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
          }
 
@@ -338,10 +338,10 @@ sub main(){
          my ($webshell_flag, $webshell_msg) = detect_webshell(deobfusucate($stack_trace));
          unless($webshell_flag){
             # 難読化されているがwebshellではない
-            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "OBFUSCATE[o] WEBSHELL[x] [" . join(", ", @$obfuscate_msg, @$webshell_msg) ."]");
+            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "OBFUSCATE[o] WEBSHELL[x] INFO[" . join(", ", @$obfuscate_msg, @$webshell_msg) ."]");
          }else{
             # 難読化されているWebShellである
-            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "OBFUSCATE[o] WEBSHELL[o] [" . join(", ", @$obfuscate_msg, @$webshell_msg) ."]");
+            %ret = ( 'mode' => 'detect-obfuscate', 'body' => "OBFUSCATE[o] WEBSHELL[o] INFO[" . join(", ", @$obfuscate_msg, @$webshell_msg) ."]");
          }
 
          return [ 200, [ 'Content-Type' => 'text/plain' ], [ encode_json( \%ret ) ], ];
