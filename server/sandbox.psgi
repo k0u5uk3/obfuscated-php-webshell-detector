@@ -173,7 +173,7 @@ sub detect_webshell($){
       next unless defined $code;
       my $strip = strip_php_code($code);            
       foreach my $webshell_code (@webshell_codes){
-         my $count = scalar( () = $strip =~ /$webshell_code\(.+\)/g);
+         my $count = scalar( () = $strip =~ /[^\w]$webshell_code\(.+\)/g);
          if($count){  
             push(@msg, "$webshell_code($count)");
             $flag++;
